@@ -1,0 +1,29 @@
+name: Deploy Backend to EC2 with PM2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2 and restart PM2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_PUBLIC_IP }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            cd muawin   # Update to correct directory name
+            git pull origin main
+            cd backend
+            npm install
+            pm2 restart ${{ secrets.PM2_APP_NAME }} || pm2 start index.js --name ${{ secrets.PM2_APP_NAME }}
