@@ -18,6 +18,7 @@ import {
   Alert,
 } from '@mui/material';
 import { createTheme, ThemeProvider, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
   const [zones, setZones] = useState([]);
@@ -32,6 +33,7 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
   // Determine light or dark mode based on system preferences
   const theme = useTheme();
   const prefersDarkMode = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const dynamicTheme = createTheme({
     palette: {
@@ -217,31 +219,44 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
   return (
     <ThemeProvider theme={dynamicTheme}>
       <Drawer
-        anchor="right"
+        anchor={isMobile ? 'bottom' : 'right'}
         open={open}
         onClose={onClose}
         PaperProps={{
           sx: {
             backgroundColor: prefersDarkMode ? '#121212' : '#ffffff',
             color: prefersDarkMode ? '#ffffff' : '#000000',
+            width: isMobile ? '100%' : 500,
+            maxWidth: '100vw',
+            borderTopLeftRadius: isMobile ? 16 : 0,
+            borderTopRightRadius: isMobile ? 16 : 0,
+            borderBottomLeftRadius: isMobile ? 0 : 8,
+            borderBottomRightRadius: isMobile ? 0 : 8,
           },
         }}
       >
-        <Box sx={{ width: 500, padding: 4, mt: 8 }}>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1, color: '#f15a22'}}>
+        <Box sx={{
+          width: '100%',
+          maxWidth: 500,
+          padding: isMobile ? 2 : 4,
+          pt: isMobile ? 2 : 8,
+          pb: isMobile ? 2 : 4,
+          mx: 'auto',
+        }}>
+          <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold', mb: 1, color: '#f15a22', textAlign: 'center', fontSize: isMobile ? '1.1rem' : undefined }}>
             Edit or Remove Branch Name
           </Typography>
           <Divider sx={{ mb: 3, borderColor: '#f15a22' }} />
 
-          <FormControl component="fieldset">
+          <FormControl component="fieldset" sx={{ width: '100%', mb: 2 }}>
             <FormLabel sx={{ color: '#f15a22' }} component="legend">Select Action</FormLabel>
-            <RadioGroup row value={action} onChange={(e) => setAction(e.target.value)}>
+            <RadioGroup row={!isMobile} value={action} onChange={(e) => setAction(e.target.value)} sx={{ justifyContent: isMobile ? 'center' : 'flex-start' }}>
               <FormControlLabel value="edit" control={<Radio sx={{ color: '#f15a22', '&.Mui-checked': { color: '#f15a22' } }} />} label="Edit" />
               <FormControlLabel value="remove" control={<Radio sx={{ color: '#f15a22', '&.Mui-checked': { color: '#f15a22' } }} />} label="Remove" />
             </RadioGroup>
           </FormControl>
 
-          <FormControl fullWidth sx={{ mt: 3, mb: 2 }}>
+          <FormControl fullWidth sx={{ mb: 2 }}>
             <FormLabel sx={{ color: '#f15a22' }}>Select Zone</FormLabel>
             <Select
               value={selectedZone}
@@ -259,13 +274,14 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
                 '& .MuiOutlinedInput-input': {
                   color: prefersDarkMode ? '#ffffff' : '#000000',
                 },
+                fontSize: isMobile ? '0.98rem' : undefined,
               }}
             >
               <MenuItem value="" disabled>
                 Select a Zone
               </MenuItem>
               {zones.map((zone) => (
-                <MenuItem key={zone._id} value={zone.zoneName}>
+                <MenuItem key={zone._id} value={zone.zoneName} sx={{ fontSize: isMobile ? '0.98rem' : undefined }}>
                   {zone.zoneName}
                 </MenuItem>
               ))}
@@ -289,13 +305,14 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
                 '& .MuiOutlinedInput-input': {
                   color: prefersDarkMode ? '#ffffff' : '#000000',
                 },
+                fontSize: isMobile ? '0.98rem' : undefined,
               }}
             >
               <MenuItem value="" disabled>
                 Select a Branch
               </MenuItem>
               {branches.map((branch, index) => (
-                <MenuItem key={index} value={branch}>
+                <MenuItem key={index} value={branch} sx={{ fontSize: isMobile ? '0.98rem' : undefined }}>
                   {branch || 'Unnamed Branch'}
                 </MenuItem>
               ))}
@@ -303,12 +320,12 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
           </FormControl>
 
           {action === 'edit' && (
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', mb: 2, gap: isMobile ? 1.5 : 1 }}>
               <TextField 
                 label="Prefix (Locked)" 
                 value="Cheezious" 
                 InputProps={{ readOnly: true }} 
-                sx={{ mr: 1, flex: 1 }}
+                sx={{ mr: isMobile ? 0 : 1, flex: 1, mb: isMobile ? 1 : 0 }}
                 InputLabelProps={{
                   style: { color: '#f15a22' },
                   shrink: true,
@@ -335,7 +352,14 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
               color: 'white',
               '&:hover': {
                 backgroundColor: '#d9531e'
-              }
+              },
+              fontWeight: 600,
+              fontSize: isMobile ? '1rem' : '1.05rem',
+              minHeight: 44,
+              mt: 1.5,
+              mb: 1,
+              borderRadius: 2,
+              boxShadow: 2
             }}
             onClick={handleSave}
             disabled={!selectedZone || !selectedBranch || (action === 'edit' && !newBranchName)}

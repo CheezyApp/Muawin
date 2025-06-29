@@ -13,6 +13,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
+import { useAuth } from "../../contexts/AuthContext";
 
 // Styled components
 const BackgroundWrapper = styled(Box)(({ theme }) => ({
@@ -155,13 +156,14 @@ const Rectangle = styled(Box)(({ theme }) => ({
   },
 }));
 
-function SignInPage({ onLogin }) {
+function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -188,11 +190,8 @@ function SignInPage({ onLogin }) {
 
       if (response.ok) {
         setError("");
-        localStorage.setItem("token", data.token); // Assuming token is returned
-        localStorage.setItem("user", JSON.stringify(data.user)); // Store user details
-
-        onLogin(data);
-        navigate("/", { replace: true });
+        login(data); // Use the login function from AuthContext
+        navigate("/", { replace: true }); // Navigate to home page
       } else {
         setError(data.message || "Invalid credentials. Please try again.");
       }

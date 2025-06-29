@@ -17,6 +17,7 @@ const locationRoutes = require('./routes/locationRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const cylinderExpiryRoutes = require('./routes/cylinderExpiryRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const moduleRoutes = require('./routes/moduleRoutes');
 
 // Initialize express app
 const app = express();
@@ -54,6 +55,7 @@ app.get('/api', (req, res) => {
 // Public routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/modules', moduleRoutes);
 
 // Protected routes
 app.use('/api/zones', auth, zoneRoutes);

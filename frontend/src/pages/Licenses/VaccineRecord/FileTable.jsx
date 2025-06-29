@@ -14,6 +14,7 @@ import Typography from '@mui/material/Typography';
 import ErrorBoundary from '../../../components/ErrorBoundary';
 import ErrorNotification from '../../../components/ErrorNotification';
 import useErrorHandler from '../../../hooks/useErrorHandler';
+import Button from '@mui/material/Button';
 
 const FileTable = ({ files, onDelete, user }) => {
   const theme = useTheme();
@@ -68,6 +69,30 @@ const FileTable = ({ files, onDelete, user }) => {
       await onDelete(filename);
     } catch (err) {
       handleError(new Error('Failed to delete file. Please try again.'));
+    }
+  };
+
+  // Authenticated file download
+  const handleDownload = async (filename) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(filename)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('File download failed.');
     }
   };
 
@@ -202,11 +227,7 @@ const FileTable = ({ files, onDelete, user }) => {
                   )}
                   <IconButton
                     aria-label="view"
-                    href={`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(
-                      file.filename
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    onClick={() => handleDownload(file.filename)}
                     sx={{
                       color: buttonColor,
                     }}

@@ -405,6 +405,7 @@ const AddCylinderExpiry = ({ onAdd, user }) => {
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert
           onClose={handleSnackbarClose}

@@ -153,31 +153,49 @@ const FileTable = ({ files, onDelete, user  }) => {
 
               {/* -------------- */}
 
-              {/* DELETE ICON */}
-              <TableCell align="center">
-              {user?.role === 'Admin' && (
+              {/* Manage */}
+              <TableCell align="center" sx={{ padding: { xs: '6px', sm: '12px' } }}>
+                {user?.role === 'Admin' && (
                   <IconButton
                     onClick={() => onDelete(file.filename)}
                     aria-label="delete"
-                    sx={{ color: buttonColor }}
+                    sx={{
+                      color: buttonColor,
+                    }}
                   >
                     <DeleteIcon />
                   </IconButton>
                 )}
-
-                {/* -------------- */}
-
-                {/* VIEW ICON */}
                 <IconButton
                   aria-label="view"
-                  href={`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(file.filename)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{ color: buttonColor }}
+                  onClick={async () => {
+                    const token = localStorage.getItem('token');
+                    try {
+                      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(file.filename)}`, {
+                        headers: {
+                          'Authorization': `Bearer ${token}`
+                        }
+                      });
+                      if (!response.ok) throw new Error('Download failed');
+                      const blob = await response.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = file.filename;
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      window.URL.revokeObjectURL(url);
+                    } catch (err) {
+                      alert('File download failed.');
+                    }
+                  }}
+                  sx={{
+                    color: buttonColor,
+                  }}
                 >
                   <VisibilityIcon />
                 </IconButton>
-                {/* -------------- */}
               </TableCell>
             </TableRow>
           ))}

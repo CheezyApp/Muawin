@@ -5,6 +5,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
 import './App.css';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Component Imports
 import SignInPage from './Component/Signin/Signin';
@@ -16,7 +17,7 @@ import SessionTimeout from './SessionTimeout';
 // Licenses Imports
 import Licensepage from './pages/Licenses/Licensepage';
 import Cantonment from './pages/Licenses/Cantonment/Cantonment';
-import CapitalFoodAuthority from './pages/Licenses/CapitalFoodAuthority/CapitalFoodAuthority';
+import CapitalDevelopmentAuthority from './pages/Licenses/CapitalDevelopmentAuthority/CapitalDevelopmentAuthority';
 import HiringTests from './pages/Licenses/HiringTests/HiringTests';
 import IslamabadFoodAuthority from './pages/Licenses/IslamabadFoodAuthority/IslamabadFoodAuthority';
 import LabourLicenses from './pages/Licenses/LabourLicenses/LabourLicenses';
@@ -82,15 +83,12 @@ import Wah from './pages/Vehicles/Wah/Wah';
 // User Management Imports
 import ActiveUsers from './pages/UserManagement/ActiveUsers';
 
-function App() {
-  // ------------ Authentication ------------
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null); // user data
-
+// Authenticated App Component
+const AuthenticatedApp = () => {
+  const { isAuthenticated, user, isLoading, logout } = useAuth();
+  
   // ------------ Drawer States ------------
-  // mobileOpen => for small screens (temporary drawer)
   const [mobileOpen, setMobileOpen] = useState(false);
-  // desktopOpen => for large screens (mini vs. full permanent drawer)
   const [desktopOpen, setDesktopOpen] = useState(false);
 
   // ------------ Dark Mode ------------
@@ -99,6 +97,27 @@ function App() {
   // ------------ Search ------------
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
+
+  const handleDarkModeToggle = () => {
+    setDarkMode((prev) => !prev);
+  };
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    if (query && user?.registeredModules) {
+      const lowerQuery = query.toLowerCase();
+      const results = items.filter((item) => {
+        const userModules = user.registeredModules;
+        const hasAccess = Array.isArray(userModules) && userModules.some((module) =>
+          module.includes(item.name)
+        );
+        return hasAccess && item.name.toLowerCase().includes(lowerQuery);
+      });
+      setSearchResults(results);
+    } else {
+      setSearchResults([]);
+    }
+  };
 
   // This array is for search logic (you can adapt as needed)
   const items = [
@@ -146,45 +165,6 @@ function App() {
     { name: 'User Management', path: '/UserManagement/', category: 'Modules > User Management' },
   ];
 
-  // ------------ Handlers ------------
-  const handleDarkModeToggle = () => {
-    setDarkMode((prev) => !prev);
-  };
-
-  const handleLogin = (data) => {
-    setIsAuthenticated(true);
-    setUser(data.user); // Set the user state with the user object from backend data
-    localStorage.setItem('token', data.token); // Store the actual token
-    localStorage.setItem('user', JSON.stringify(data.user)); // Ensure user data is also in localStorage
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    // Optionally redirect to login
-    window.location.href = '/login';
-  };
-
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-    if (query && user?.registeredModules) {
-      const lowerQuery = query.toLowerCase();
-      const results = items.filter((item) => {
-        // Add a check to ensure user.registeredModules is an array
-        const userModules = user.registeredModules;
-        const hasAccess = Array.isArray(userModules) && userModules.some((module) =>
-          module.includes(item.name)
-        );
-        return hasAccess && item.name.toLowerCase().includes(lowerQuery);
-      });
-      setSearchResults(results);
-    } else {
-      setSearchResults([]);
-    }
-  };
-
   // ------------ Theme ------------
   const theme = createTheme({
     palette: {
@@ -198,556 +178,582 @@ function App() {
     },
   });
 
-  // -------------------------------- RENDER --------------------------------
+  // Show loading screen while checking authentication
+  if (isLoading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          fontSize: '18px',
+          color: darkMode ? '#fff' : '#333'
+        }}>
+          Loading...
+        </div>
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
-        {/* Session Timeout if user is authenticated */}
-        {isAuthenticated && (
-          <SessionTimeout timeout={15 * 60 * 1000} onLogout={handleLogout} />
-        )}
+      {/* Session Timeout if user is authenticated */}
+      {isAuthenticated && (
+        <SessionTimeout timeout={15 * 60 * 1000} />
+      )}
 
-        {/* Show AppBar if logged in */}
-        {isAuthenticated && (
-          <AppBarComponent
-            darkMode={darkMode}
-            handleDarkModeToggle={handleDarkModeToggle}
-            searchQuery={searchQuery}
-            onSearch={handleSearch}
-            searchResults={searchResults}
-            user={user}
-            // Drawer states to allow toggling from the AppBar
-            mobileOpen={mobileOpen}
-            setMobileOpen={setMobileOpen}
-            desktopOpen={desktopOpen}
-            setDesktopOpen={setDesktopOpen}
-          />
-        )}
+      {/* Show AppBar if logged in */}
+      {isAuthenticated && user && (
+        <AppBarComponent
+          darkMode={darkMode}
+          handleDarkModeToggle={handleDarkModeToggle}
+          searchQuery={searchQuery}
+          onSearch={handleSearch}
+          searchResults={searchResults}
+          user={user}
+          mobileOpen={mobileOpen}
+          setMobileOpen={setMobileOpen}
+          desktopOpen={desktopOpen}
+          setDesktopOpen={setDesktopOpen}
+        />
+      )}
 
-        {/* Single Drawer for the entire app, shown if logged in */}
-        {isAuthenticated && (
-          <DrawerComponent
-            user={user}
-            mobileOpen={mobileOpen}
-            setMobileOpen={setMobileOpen}
-            desktopOpen={desktopOpen}
-            setDesktopOpen={setDesktopOpen}
-          />
-        )}
+      {/* Single Drawer for the entire app, shown if logged in */}
+      {isAuthenticated && user && (
+        <DrawerComponent
+          user={user}
+          mobileOpen={mobileOpen}
+          setMobileOpen={setMobileOpen}
+          desktopOpen={desktopOpen}
+          setDesktopOpen={setDesktopOpen}
+        />
+      )}
 
-        <Routes>
-          {/* ------------ Public Route (Login) ------------ */}
-          <Route path="/login" element={<SignInPage onLogin={handleLogin} />} />
+      <Routes>
+        {/* ------------ Public Route (Login) ------------ */}
+        <Route path="/login" element={<SignInPage />} />
 
-          {/* ------------ Main Content or Redirect ------------ */}
-          <Route
-            path="/"
-            element={
-              isAuthenticated ? (
-                <MainContent user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ Main Content or Redirect ------------ */}
+        <Route
+          path="/"
+          element={
+            isAuthenticated && user ? (
+              <MainContent user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ User Management ------------ */}
-          <Route
-            path="/UserManagement/"
-            element={
-              isAuthenticated ? (
-                <ActiveUsers />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ User Management ------------ */}
+        <Route
+          path="/UserManagement/"
+          element={
+            isAuthenticated && user ? (
+              <ActiveUsers />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ Rental Agreements ------------ */}
-          <Route
-            path="/RentalAgreements/"
-            element={
-              isAuthenticated ? (
-                <RentalAgreements user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ Rental Agreements ------------ */}
+        <Route
+          path="/RentalAgreements/"
+          element={
+            isAuthenticated && user ? (
+              <RentalAgreements user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ Admin Policies ------------ */}
-          <Route
-            path="/AdminPolicies/"
-            element={
-              isAuthenticated ? (
-                <AdminPolicies user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ Admin Policies ------------ */}
+        <Route
+          path="/AdminPolicies/"
+          element={
+            isAuthenticated && user ? (
+              <AdminPolicies user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ User Requests ------------ */}
-          <Route
-            path="/UserRequests/"
-            element={
-              isAuthenticated ? (
-                <UserRequests user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ User Requests ------------ */}
+        <Route
+          path="/UserRequests/"
+          element={
+            isAuthenticated && user ? (
+              <UserRequests user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ Licenses Routes ------------ */}
-          <Route
-            path="/Licenses/Licensepage"
-            element={
-              isAuthenticated ? (
-                <Licensepage user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Licenses/Cantonment"
-            element={
-              isAuthenticated ? (
-                <Cantonment user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Licenses/CapitalFoodAuthority"
-            element={
-              isAuthenticated ? (
-                <CapitalFoodAuthority user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Licenses/IslamabadFoodAuthority"
-            element={
-              isAuthenticated ? (
-                <IslamabadFoodAuthority user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Licenses/LabourLicenses"
-            element={
-              isAuthenticated ? (
-                <LabourLicenses user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Licenses/Medical"
-            element={
-              isAuthenticated ? (
-                <Medical user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Licenses/PunjabFoodAuthority"
-            element={
-              isAuthenticated ? (
-                <PunjabFoodAuthority user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Licenses/RecurringMedicalTests"
-            element={
-              isAuthenticated ? (
-                <RecurringMedicalTests user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Licenses/TourismLicenses"
-            element={
-              isAuthenticated ? (
-                <TourismLicenses user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Licenses/VaccineRecord"
-            element={
-              isAuthenticated ? (
-                <VaccineRecord user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Licenses/HiringTests"
-            element={
-              isAuthenticated ? (
-                <HiringTests user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ Licenses Routes ------------ */}
+        <Route
+          path="/Licenses/Licensepage"
+          element={
+            isAuthenticated && user ? (
+              <Licensepage user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Licenses/Cantonment"
+          element={
+            isAuthenticated && user ? (
+              <Cantonment user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Licenses/CapitalDevelopmentAuthority"
+          element={
+            isAuthenticated && user ? (
+              <CapitalDevelopmentAuthority user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Licenses/IslamabadFoodAuthority"
+          element={
+            isAuthenticated && user ? (
+              <IslamabadFoodAuthority user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Licenses/LabourLicenses"
+          element={
+            isAuthenticated && user ? (
+              <LabourLicenses user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Licenses/Medical"
+          element={
+            isAuthenticated && user ? (
+              <Medical user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Licenses/PunjabFoodAuthority"
+          element={
+            isAuthenticated && user ? (
+              <PunjabFoodAuthority user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Licenses/RecurringMedicalTests"
+          element={
+            isAuthenticated && user ? (
+              <RecurringMedicalTests user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Licenses/TourismLicenses"
+          element={
+            isAuthenticated && user ? (
+              <TourismLicenses user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Licenses/VaccineRecord"
+          element={
+            isAuthenticated && user ? (
+              <VaccineRecord user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Licenses/HiringTests"
+          element={
+            isAuthenticated && user ? (
+              <HiringTests user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ Approvals Routes ------------ */}
-          <Route
-            path="/Approval/Approvalpage"
-            element={
-              isAuthenticated ? (
-                <Approvalpage user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Approval/DineIn"
-            element={
-              isAuthenticated ? (
-                <DineIn user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Approval/Generators"
-            element={
-              isAuthenticated ? (
-                <Generators user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Approval/Facilities"
-            element={
-              isAuthenticated ? (
-                <Facilities user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/ModulesGrid"
-            element={
-              isAuthenticated ? (
-                <ModulesGrid />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ Approvals Routes ------------ */}
+        <Route
+          path="/Approval/Approvalpage"
+          element={
+            isAuthenticated && user ? (
+              <Approvalpage user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Approval/DineIn"
+          element={
+            isAuthenticated && user ? (
+              <DineIn user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Approval/Generators"
+          element={
+            isAuthenticated && user ? (
+              <Generators user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Approval/Facilities"
+          element={
+            isAuthenticated && user ? (
+              <Facilities user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/ModulesGrid"
+          element={
+            isAuthenticated && user ? (
+              <ModulesGrid />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ Vehicles Routes ------------ */}
-          <Route
-            path="/Vehicles/Vehiclepage"
-            element={
-              isAuthenticated ? (
-                <Vehiclepage user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Vehicles/RoutineMaintainence"
-            element={
-              isAuthenticated ? (
-                <RoutineMaintainence user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Vehicles/MajorParts"
-            element={
-              isAuthenticated ? (
-                <MajorParts user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Vehicles/MajorRepairs"
-            element={
-              isAuthenticated ? (
-                <MajorRepairs user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Vehicles/AnnualTokenTax"
-            element={
-              isAuthenticated ? (
-                <AnnualTokenTax user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Vehicles/MTag"
-            element={
-              isAuthenticated ? (
-                <MTag user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Vehicles/CanttPasses"
-            element={
-              isAuthenticated ? (
-                <CanttPasses user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Vehicles/Islamabad"
-            element={
-              isAuthenticated ? (
-                <Islamabad user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Vehicles/Peshawar"
-            element={
-              isAuthenticated ? (
-                <Peshawar user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Vehicles/Rawalpindi"
-            element={
-              isAuthenticated ? (
-                <Rawalpindi user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Vehicles/Wah"
-            element={
-              isAuthenticated ? (
-                <Wah user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ Vehicles Routes ------------ */}
+        <Route
+          path="/Vehicles/Vehiclepage"
+          element={
+            isAuthenticated && user ? (
+              <Vehiclepage user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Vehicles/RoutineMaintainence"
+          element={
+            isAuthenticated && user ? (
+              <RoutineMaintainence user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Vehicles/MajorParts"
+          element={
+            isAuthenticated && user ? (
+              <MajorParts user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Vehicles/MajorRepairs"
+          element={
+            isAuthenticated && user ? (
+              <MajorRepairs user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Vehicles/AnnualTokenTax"
+          element={
+            isAuthenticated && user ? (
+              <AnnualTokenTax user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Vehicles/MTag"
+          element={
+            isAuthenticated && user ? (
+              <MTag user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Vehicles/CanttPasses"
+          element={
+            isAuthenticated && user ? (
+              <CanttPasses user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Vehicles/Islamabad"
+          element={
+            isAuthenticated && user ? (
+              <Islamabad user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Vehicles/Peshawar"
+          element={
+            isAuthenticated && user ? (
+              <Peshawar user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Vehicles/Rawalpindi"
+          element={
+            isAuthenticated && user ? (
+              <Rawalpindi user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Vehicles/Wah"
+          element={
+            isAuthenticated && user ? (
+              <Wah user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ HSE Routes ------------ */}
-          <Route
-            path="/Hse/Hse"
-            element={
-              isAuthenticated ? (
-                <Hse user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Hse/MonthlyInspection"
-            element={
-              isAuthenticated ? (
-                <MonthlyInspection user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Hse/QuarterlyAudit"
-            element={
-              isAuthenticated ? (
-                <QuarterlyAudit user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Hse/ExpiryofCylinders"
-            element={
-              isAuthenticated ? (
-                <ExpiryofCylinders user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Hse/Fatal"
-            element={
-              isAuthenticated ? (
-                <Fatal user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Hse/LostTimeInjury"
-            element={
-              isAuthenticated ? (
-                <LostTimeInjury user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Hse/RestrictedWorkInjury"
-            element={
-              isAuthenticated ? (
-                <RestrictedWorkInjury user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Hse/FireSafety"
-            element={
-              isAuthenticated ? (
-                <FireSafety user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Hse/FireAid"
-            element={
-              isAuthenticated ? (
-                <FireAid user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Hse/Emergency"
-            element={
-              isAuthenticated ? (
-                <Emergency user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ HSE Routes ------------ */}
+        <Route
+          path="/Hse/Hse"
+          element={
+            isAuthenticated && user ? (
+              <Hse user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Hse/MonthlyInspection"
+          element={
+            isAuthenticated && user ? (
+              <MonthlyInspection user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Hse/QuarterlyAudit"
+          element={
+            isAuthenticated && user ? (
+              <QuarterlyAudit user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Hse/ExpiryofCylinders"
+          element={
+            isAuthenticated && user ? (
+              <ExpiryofCylinders user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Hse/Fatal"
+          element={
+            isAuthenticated && user ? (
+              <Fatal user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Hse/LostTimeInjury"
+          element={
+            isAuthenticated && user ? (
+              <LostTimeInjury user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Hse/RestrictedWorkInjury"
+          element={
+            isAuthenticated && user ? (
+              <RestrictedWorkInjury user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Hse/FireSafety"
+          element={
+            isAuthenticated && user ? (
+              <FireSafety user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Hse/FireAid"
+          element={
+            isAuthenticated && user ? (
+              <FireAid user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Hse/Emergency"
+          element={
+            isAuthenticated && user ? (
+              <Emergency user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ Taxation Routes ------------ */}
-          <Route
-            path="/Taxation/Taxationpage"
-            element={
-              isAuthenticated ? (
-                <Taxationpage user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Taxation/MarketingBillBoardsTaxes"
-            element={
-              isAuthenticated ? (
-                <MarketingBillBoardsTaxes user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Taxation/ProfessionTax"
-            element={
-              isAuthenticated ? (
-                <ProfessionTax user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ Taxation Routes ------------ */}
+        <Route
+          path="/Taxation/Taxationpage"
+          element={
+            isAuthenticated && user ? (
+              <Taxationpage user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Taxation/MarketingBillBoardsTaxes"
+          element={
+            isAuthenticated && user ? (
+              <MarketingBillBoardsTaxes user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Taxation/ProfessionTax"
+          element={
+            isAuthenticated && user ? (
+              <ProfessionTax user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ Certificates Routes ------------ */}
-          <Route
-            path="/Certificate/Certificatepage"
-            element={
-              isAuthenticated ? (
-                <Certificatepage user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/Certificate/ElectricFitnessTest"
-            element={
-              isAuthenticated ? (
-                <ElectricFitnessTest user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ Certificates Routes ------------ */}
+        <Route
+          path="/Certificate/Certificatepage"
+          element={
+            isAuthenticated && user ? (
+              <Certificatepage user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/Certificate/ElectricFitnessTest"
+          element={
+            isAuthenticated && user ? (
+              <ElectricFitnessTest user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* ------------ Security Routes ------------ */}
-          <Route
-            path="/Security/GuardTraining"
-            element={
-              isAuthenticated ? (
-                <GuardTraining user={user} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
+        {/* ------------ Security Routes ------------ */}
+        <Route
+          path="/Security/GuardTraining"
+          element={
+            isAuthenticated && user ? (
+              <GuardTraining user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
 
-          {/* (Add any other routes not covered above) */}
-        </Routes>
-      </Router>
+        {/* (Add any other routes not covered above) */}
+      </Routes>
     </ThemeProvider>
+  );
+};
+
+// Main App Component
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AuthenticatedApp />
+      </AuthProvider>
+    </Router>
   );
 }
 

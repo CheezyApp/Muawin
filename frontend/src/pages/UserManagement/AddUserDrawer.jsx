@@ -29,6 +29,7 @@ import {
   useTheme,
   Snackbar, // Import Snackbar for notifications
   Alert, // Import Alert for styled messages
+  useMediaQuery,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import axios from 'axios'; // Import axios for API calls
@@ -98,6 +99,7 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
 
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Form state
   const [formValues, setFormValues] = useState({
@@ -278,7 +280,18 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
     }
     if (!generatePassword) {
       errors.generatePassword = 'You must generate a password';
-      //alert('Please select "Generate New Password" before proceeding.');
+    }
+    // Role, Zone, Branch checks (for step 2)
+    if (activeStep === 1) {
+      if (!role || (roleType === 'Custom Role' && !customRole.trim())) {
+        errors.role = 'Role is required';
+      }
+      if (!selectedZone) {
+        errors.zone = 'Zone is required';
+      }
+      if (!selectedBranch) {
+        errors.branch = 'Branch is required';
+      }
     }
 
     setFormErrors(errors);
@@ -288,9 +301,9 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
   };
 
   const handleNext = () => {
-    if (activeStep === 0 && validateForm()) {
-      setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    } else if (activeStep > 0) {
+    if ((activeStep === 0 && validateForm()) ||
+        (activeStep === 1 && validateForm()) ||
+        (activeStep > 1)) {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     }
   };
@@ -535,7 +548,7 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
   return (
     <ErrorBoundary>
       <Drawer
-        anchor="right"
+        anchor={isMobile ? "bottom" : "right"}
         open={open}
         onClose={() => {
           resetDrawer();
@@ -543,17 +556,21 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
         }}
         PaperProps={{
           sx: {
-            width: { xs: '100%', sm: '600px' },
+            width: isMobile ? '100%' : { xs: '100%', sm: '600px' },
+            height: isMobile ? '90vh' : '100%',
             backgroundColor: isDarkMode ? '#1a1a1a' : '#ffffff',
             color: isDarkMode ? '#ffffff' : '#000000',
+            borderTopLeftRadius: isMobile ? 16 : 0,
+            borderTopRightRadius: isMobile ? 16 : 0,
           },
         }}
       >
         <Box sx={{
           display: 'flex',
           height: '100%',
-          paddingTop: '64px',
+          paddingTop: isMobile ? '0px' : '64px',
           overflowY: 'hidden',
+          flexDirection: isMobile ? 'column' : 'row',
           '&::-webkit-scrollbar': {
             width: '8px',
           },
@@ -565,32 +582,47 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
             backgroundColor: isDarkMode ? '#333' : '#f5f5f5',
           }
         }}>
+          {!isMobile && (
+            <Box
+              sx={{
+                width: '20%',
+                backgroundColor: isDarkMode ? '#333' : '#f5f5f5',
+                paddingTop: 3,
+                paddingLeft: 2,
+              }}
+            >
+              <Stepper activeStep={activeStep} orientation="vertical">
+                {steps.map((label, index) => (
+                  <Step key={label}>
+                    <StepLabel
+                      StepIconProps={{
+                        style: { color: activeStep >= index ? '#f15a22' : isDarkMode ? '#555' : '#d1d1d1' },
+                      }}
+                    >
+                      <Typography sx={{ color: isDarkMode ? '#fff' : '#000' }}>{label}</Typography>
+                    </StepLabel>
+                  </Step>
+                ))}
+              </Stepper>
+            </Box>
+          )}
+          
+          {isMobile && (
+            <Box sx={{ 
+              p: 2, 
+              borderBottom: '1px solid #e0e0e0',
+              backgroundColor: isDarkMode ? '#333' : '#f5f5f5'
+            }}>
+              <Typography variant="h6" sx={{ textAlign: 'center', fontWeight: 'bold' }}>
+                Add New User - Step {activeStep + 1} of {steps.length}
+              </Typography>
+            </Box>
+          )}
+          
           <Box
             sx={{
-              width: '20%',
-              backgroundColor: isDarkMode ? '#333' : '#f5f5f5',
-              paddingTop: 3,
-              paddingLeft: 2,
-            }}
-          >
-            <Stepper activeStep={activeStep} orientation="vertical">
-              {steps.map((label, index) => (
-                <Step key={label}>
-                  <StepLabel
-                    StepIconProps={{
-                      style: { color: activeStep >= index ? '#f15a22' : isDarkMode ? '#555' : '#d1d1d1' },
-                    }}
-                  >
-                    <Typography sx={{ color: isDarkMode ? '#fff' : '#000' }}>{label}</Typography>
-                  </StepLabel>
-                </Step>
-              ))}
-            </Stepper>
-          </Box>
-          <Box
-            sx={{
-              width: '80%',
-              padding: 4,
+              width: isMobile ? '100%' : '80%',
+              padding: isMobile ? 2 : 4,
               height: '100%',
               overflowY: 'auto',
               '&::-webkit-scrollbar': {
@@ -607,12 +639,12 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
           >
             {activeStep === 0 ? (
               <>
-                <Typography variant="h5" gutterBottom sx={{ color: isDarkMode ? '#fff' : '#000' }}>
+                <Typography variant={isMobile ? "h6" : "h5"} gutterBottom sx={{ color: isDarkMode ? '#fff' : '#000' }}>
                   Set up the basics
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
-                <Grid container spacing={3}>
-                  <Grid item xs={6}>
+                <Grid container spacing={isMobile ? 2 : 3}>
+                  <Grid item xs={isMobile ? 12 : 6}>
                     <TextField
                       label="First Name"
                       fullWidth
@@ -623,6 +655,7 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                       InputLabelProps={{ shrink: true }}
                       error={!!formErrors.firstName}
                       helperText={formErrors.firstName}
+                      size={isMobile ? "small" : "medium"}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           '& fieldset': {
@@ -641,7 +674,7 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                       }}
                     />
                   </Grid>
-                  <Grid item xs={6}>
+                  <Grid item xs={isMobile ? 12 : 6}>
                     <TextField
                       label="Last Name"
                       fullWidth
@@ -652,6 +685,7 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                       InputLabelProps={{ shrink: true }}
                       error={!!formErrors.lastName}
                       helperText={formErrors.lastName}
+                      size={isMobile ? "small" : "medium"}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           '& fieldset': {
@@ -681,6 +715,7 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                       InputLabelProps={{ shrink: true }}
                       error={!!formErrors.displayName}
                       helperText={formErrors.displayName}
+                      size={isMobile ? "small" : "medium"}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           '& fieldset': {
@@ -706,11 +741,12 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                         fullWidth
                         name="username"
                         variant="outlined"
-                        value={formValues.username}  // Do not append @cheezious.com here
-                        onChange={handleInputChange}  // Keep it as raw input
+                        value={formValues.username}
+                        onChange={handleInputChange}
                         InputLabelProps={{ shrink: true }}
                         error={!!formErrors.username}
                         helperText={formErrors.username}
+                        size={isMobile ? "small" : "medium"}
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             '& fieldset': {
@@ -728,12 +764,8 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                           },
                         }}
                       />
-                      <Typography sx={{ marginLeft: 1, color: isDarkMode ? '#fff' : '#000' }}>
-                        @cheezious.com
-                      </Typography>
                     </Box>
                   </Grid>
-
                   <Grid item xs={12}>
                     <FormControlLabel
                       control={
@@ -746,84 +778,36 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                       label="Generate New Password"
                     />
                     {formErrors.generatePassword && (
-                      <Typography sx={{ color: '#f44336', mt: 1 }}>
+                      <Typography sx={{ color: '#f44336', mt: 1, fontSize: '0.85rem' }}>
                         {formErrors.generatePassword}
                       </Typography>
                     )}
                   </Grid>
-
                 </Grid>
               </>
             ) : activeStep === 1 ? (
               <>
-                <Typography variant="h5" gutterBottom sx={{ color: isDarkMode ? '#fff' : '#000' }}>
+                <Typography variant={isMobile ? "h6" : "h5"} gutterBottom sx={{ color: isDarkMode ? '#fff' : '#000' }}>
                   Manage Roles
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
-                <FormControl component="fieldset">
-                  <FormLabel
-                    component="legend"
-                    sx={{
-                      color: '#f15a22',
-                      '&.Mui-focused': {
-                        color: '#f15a22',
-                      },
-                    }}
-                  >
-                    Select Type
-                  </FormLabel>
-                  <RadioGroup row value={roleType} onChange={handleRoleTypeChange}>
-                    <FormControlLabel
-                      value="Headquarter Roles"
-                      control={<Radio sx={{ color: '#f15a22', '&.Mui-checked': { color: '#f15a22' } }} />}
-                      label="Department"
-                    />
-                    <FormControlLabel
-                      value="Branch Roles"
-                      control={<Radio sx={{ color: '#f15a22', '&.Mui-checked': { color: '#f15a22' } }} />}
-                      label="Branch"
-                    />
-                    <FormControlLabel
-                      value="Custom Role"
-                      control={<Radio sx={{ color: '#f15a22', '&.Mui-checked': { color: '#f15a22' } }} />}
-                      label="Custom"
-                    />
+
+                <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>
+                  <FormLabel component="legend">Role Type</FormLabel>
+                  <RadioGroup value={roleType} onChange={handleRoleTypeChange}>
+                    <FormControlLabel value="Headquarter Roles" control={<Radio />} label="Headquarter Roles" />
+                    <FormControlLabel value="Branch Roles" control={<Radio />} label="Branch Roles" />
+                    <FormControlLabel value="Custom Role" control={<Radio />} label="Custom Role" />
                   </RadioGroup>
                 </FormControl>
 
-                {roleType === 'Custom Role' && (
-                  <TextField
-                    label="Enter Custom Role"
-                    fullWidth
-                    variant="outlined"
-                    value={customRole}
-                    onChange={handleCustomRoleChange}
-                    sx={{
-                      mt: 3,
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': {
-                          borderColor: '#d1d1d1',
-                        },
-                        '&:hover fieldset': {
-                          borderColor: '#f15a22',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#f15a22',
-                        },
-                      },
-                      '& label.Mui-focused': {
-                        color: '#f15a22',
-                      },
-                    }}
-                  />
-                )}
-
-                {roleType !== 'Custom Role' && roleType === 'Headquarter Roles' ? (
-                  <FormControl fullWidth sx={{ mt: 3 }}>
+                {roleType === 'Headquarter Roles' && (
+                  <FormControl fullWidth sx={{ mb: 3 }}>
                     <Select
                       value={role}
                       onChange={handleRoleChange}
                       displayEmpty
+                      size={isMobile ? "small" : "medium"}
                       sx={{
                         '& .MuiOutlinedInput-notchedOutline': {
                           borderColor: '#f15a22',
@@ -840,7 +824,7 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                       }}
                     >
                       <MenuItem value="" disabled>
-                        Select Department
+                        Select Headquarters Role
                       </MenuItem>
                       {headquarterRoles.map((r) => (
                         <MenuItem key={r} value={r}>
@@ -848,13 +832,21 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                         </MenuItem>
                       ))}
                     </Select>
+                    {formErrors.role && (
+                      <Typography sx={{ color: '#f44336', mt: 1, fontSize: '0.85rem' }}>
+                        {formErrors.role}
+                      </Typography>
+                    )}
                   </FormControl>
-                ) : roleType !== 'Custom Role' && (
-                  <FormControl fullWidth sx={{ mt: 3 }}>
+                )}
+
+                {roleType === 'Branch Roles' && (
+                  <FormControl fullWidth sx={{ mb: 3 }}>
                     <Select
                       value={role}
                       onChange={handleRoleChange}
                       displayEmpty
+                      size={isMobile ? "small" : "medium"}
                       sx={{
                         '& .MuiOutlinedInput-notchedOutline': {
                           borderColor: '#f15a22',
@@ -879,7 +871,30 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                         </MenuItem>
                       ))}
                     </Select>
+                    {formErrors.role && (
+                      <Typography sx={{ color: '#f44336', mt: 1, fontSize: '0.85rem' }}>
+                        {formErrors.role}
+                      </Typography>
+                    )}
                   </FormControl>
+                )}
+
+                {roleType === 'Custom Role' && (
+                  <>
+                    <TextField
+                      label="Custom Role"
+                      fullWidth
+                      value={customRole}
+                      onChange={handleCustomRoleChange}
+                      size={isMobile ? "small" : "medium"}
+                      sx={{ mb: 3 }}
+                    />
+                    {formErrors.role && (
+                      <Typography sx={{ color: '#f44336', mt: 1, fontSize: '0.85rem' }}>
+                        {formErrors.role}
+                      </Typography>
+                    )}
+                  </>
                 )}
 
                 {/* New Dropdowns for Zone and Branch */}
@@ -888,6 +903,7 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                     value={selectedZone}
                     onChange={(e) => setSelectedZone(e.target.value)}
                     displayEmpty
+                    size={isMobile ? "small" : "medium"}
                     sx={{
                       '& .MuiOutlinedInput-notchedOutline': {
                         borderColor: '#f15a22',
@@ -912,19 +928,19 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                       </MenuItem>
                     ))}
                   </Select>
+                  {formErrors.zone && (
+                    <Typography sx={{ color: '#f44336', mt: 1, fontSize: '0.85rem' }}>
+                      {formErrors.zone}
+                    </Typography>
+                  )}
                 </FormControl>
 
                 <FormControl fullWidth sx={{ mt: 3 }}>
-                  {console.log('Selected Branch:', selectedBranch)} {/* Debugging for selectedBranch */}
-                  {console.log('Branches:', branches)} {/* Debugging for branches */}
-
                   <Select
-                    value={selectedBranch || ""} // Ensure it has a fallback value
-                    onChange={(e) => {
-                      console.log('Branch Selected:', e.target.value); // Log the selected branch
-                      setSelectedBranch(e.target.value); // Update the selectedBranch state
-                    }}
+                    value={selectedBranch || ""}
+                    onChange={(e) => setSelectedBranch(e.target.value)}
                     displayEmpty
+                    size={isMobile ? "small" : "medium"}
                     sx={{
                       '& .MuiOutlinedInput-notchedOutline': {
                         borderColor: '#f15a22',
@@ -943,21 +959,23 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                     <MenuItem value="" disabled>
                       {branches.length === 0 ? "No Zone Selected" : "Select Branch"}
                     </MenuItem>
-
                     {branches.length > 0 &&
-                      branches.map((branch, index) => {
-                        return (
-                          <MenuItem key={index} value={branch}>
-                            {branch} {/* Directly using the string as the label and value */}
-                          </MenuItem>
-                        );
-                      })}
+                      branches.map((branch, index) => (
+                        <MenuItem key={index} value={branch}>
+                          {branch}
+                        </MenuItem>
+                      ))}
                   </Select>
+                  {formErrors.branch && (
+                    <Typography sx={{ color: '#f44336', mt: 1, fontSize: '0.85rem' }}>
+                      {formErrors.branch}
+                    </Typography>
+                  )}
                 </FormControl>
               </>
             ) : activeStep === 2 ? (
               <>
-                <Typography variant="h5" gutterBottom sx={{ color: isDarkMode ? '#fff' : '#000' }}>
+                <Typography variant={isMobile ? "h6" : "h5"} gutterBottom sx={{ color: isDarkMode ? '#fff' : '#000' }}>
                   Manage Modules
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
@@ -965,56 +983,105 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
               </>
             ) : activeStep === 3 ? (
               <>
-                <Typography variant="h5" gutterBottom sx={{ color: isDarkMode ? '#fff' : '#000' }}>
+                <Typography variant={isMobile ? "h6" : "h5"} gutterBottom sx={{ color: isDarkMode ? '#fff' : '#000' }}>
                   Review Details
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
-                <Table>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell variant="head"><strong>Name:</strong></TableCell>
-                      <TableCell>{formValues.firstName} {formValues.lastName}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell variant="head"><strong>Display Name:</strong></TableCell>
-                      <TableCell>{formValues.displayName}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell variant="head"><strong>Username:</strong></TableCell>
-                      <TableCell>{formValues.username}@cheezious.com</TableCell>
-                    </TableRow>
+                {isMobile ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2"><strong>Name:</strong></Typography>
+                      <Typography variant="body2">{formValues.firstName} {formValues.lastName}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2"><strong>Display Name:</strong></Typography>
+                      <Typography variant="body2">{formValues.displayName}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2"><strong>Username:</strong></Typography>
+                      <Typography variant="body2">{formValues.username}@cheezious.com</Typography>
+                    </Box>
                     {generatePassword && (
-                      <TableRow>
-                        <TableCell variant="head"><strong>Generated Password:</strong></TableCell>
-                        <TableCell>{generatedPassword}</TableCell>
-                      </TableRow>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="body2"><strong>Generated Password:</strong></Typography>
+                        <Typography variant="body2">{generatedPassword}</Typography>
+                      </Box>
                     )}
-                    <TableRow>
-                      <TableCell variant="head"><strong>Role:</strong></TableCell>
-                      <TableCell>{role}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell variant="head"><strong>Zone:</strong></TableCell>
-                      <TableCell>{selectedZone}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell variant="head"><strong>Branch:</strong></TableCell>
-                      <TableCell>{selectedBranch}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell variant="head"><strong>Selected Modules:</strong></TableCell>
-                      <TableCell>{renderModules()}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2"><strong>Role:</strong></Typography>
+                      <Typography variant="body2">{role}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2"><strong>Zone:</strong></Typography>
+                      <Typography variant="body2">{selectedZone}</Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2"><strong>Branch:</strong></Typography>
+                      <Typography variant="body2">{selectedBranch}</Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="body2"><strong>Selected Modules:</strong></Typography>
+                      <Typography variant="body2" sx={{ mt: 0.5 }}>{renderModules()}</Typography>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell variant="head"><strong>Name:</strong></TableCell>
+                        <TableCell>{formValues.firstName} {formValues.lastName}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell variant="head"><strong>Display Name:</strong></TableCell>
+                        <TableCell>{formValues.displayName}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell variant="head"><strong>Username:</strong></TableCell>
+                        <TableCell>{formValues.username}@cheezious.com</TableCell>
+                      </TableRow>
+                      {generatePassword && (
+                        <TableRow>
+                          <TableCell variant="head"><strong>Generated Password:</strong></TableCell>
+                          <TableCell>{generatedPassword}</TableCell>
+                        </TableRow>
+                      )}
+                      <TableRow>
+                        <TableCell variant="head"><strong>Role:</strong></TableCell>
+                        <TableCell>{role}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell variant="head"><strong>Zone:</strong></TableCell>
+                        <TableCell>{selectedZone}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell variant="head"><strong>Branch:</strong></TableCell>
+                        <TableCell>{selectedBranch}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell variant="head"><strong>Selected Modules:</strong></TableCell>
+                        <TableCell>{renderModules()}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                )}
               </>
             ) : null}
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              mt: 4,
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? 2 : 0
+            }}>
               <Button
                 disabled={activeStep === 0}
                 onClick={handleBack}
-                sx={{ mr: 1, color: '#f15a22' }}
+                sx={{ 
+                  mr: isMobile ? 0 : 1, 
+                  color: '#f15a22',
+                  width: isMobile ? '100%' : 'auto'
+                }}
               >
                 Back
               </Button>
@@ -1022,7 +1089,11 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                 <Button
                   variant="contained"
                   onClick={handleFinish}
-                  sx={{ backgroundColor: '#f15a22', '&:hover': { backgroundColor: '#d3541e' } }}
+                  sx={{ 
+                    backgroundColor: '#f15a22', 
+                    '&:hover': { backgroundColor: '#d3541e' },
+                    width: isMobile ? '100%' : 'auto'
+                  }}
                 >
                   Finish
                 </Button>
@@ -1030,7 +1101,11 @@ const AddUserDrawer = ({ open, onClose, onUserCreated }) => {
                 <Button
                   variant="contained"
                   onClick={handleNext}
-                  sx={{ backgroundColor: '#f15a22', '&:hover': { backgroundColor: '#d3541e' } }}
+                  sx={{ 
+                    backgroundColor: '#f15a22', 
+                    '&:hover': { backgroundColor: '#d3541e' },
+                    width: isMobile ? '100%' : 'auto'
+                  }}
                 >
                   Next
                 </Button>

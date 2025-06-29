@@ -52,11 +52,20 @@ const EditLocationCategoryDrawer = ({
 
   const handleSave = async () => {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('Authentication token not found');
+        return;
+      }
+
       if (mode === 'location') {
         if (!selectedLocation || !newLocationName.trim()) return;
         const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/locations/${selectedLocation}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ name: newLocationName.trim() }),
         });
         if (response.ok) onLocationUpdated();
@@ -64,7 +73,10 @@ const EditLocationCategoryDrawer = ({
         if (!selectedCategory || !newCategoryName.trim() || !newCategoryWeight.trim()) return;
         const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/categories/${selectedCategory}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({
             name: newCategoryName.trim(),
             weight: newCategoryWeight.trim(),
@@ -77,7 +89,12 @@ const EditLocationCategoryDrawer = ({
             ? `${process.env.REACT_APP_API_BASE_URL}/locations/${deleteSelectedLocation}`
             : `${process.env.REACT_APP_API_BASE_URL}/categories/${deleteSelectedCategory}`;
 
-        const response = await fetch(endpoint, { method: 'DELETE' });
+        const response = await fetch(endpoint, { 
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (response.ok) deleteTarget === 'location' ? onLocationUpdated() : onCategoryUpdated();
       }
     } catch (error) {

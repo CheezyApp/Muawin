@@ -12,65 +12,168 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 
-const FileTable = ({ files, onDelete, onView, user  }) => {
+// Memoized helper functions to prevent recreation on every render
+const formatFilePath = (path) => {
+  return path.replace(/\s+/g, '_');
+};
+
+const getCleanFileName = (filename) => {
+  const nameWithoutUnderscores = filename.replace(/_/g, ' ');
+  return nameWithoutUnderscores.replace(/\.[^/.]+$/, '');
+};
+
+const getFileExtension = (filename) => {
+  if (!filename) return 'N/A';
+  const parts = filename.split('.');
+  if (parts.length > 1 && parts[parts.length - 1] !== '') {
+    return parts.pop().toUpperCase();
+  } else {
+    return 'N/A';
+  }
+};
+
+// Memoized table headers to prevent recreation
+const TABLE_HEADERS = ['File Path', 'File Name', 'File Type', 'Uploaded Date', 'Manage'];
+
+// Memoized FileRow component for better performance
+const FileRow = React.memo(({ file, index, onDelete, onView, user, theme, buttonColor }) => {
+  const handleDelete = React.useCallback(() => {
+    onDelete(file.filename);
+  }, [onDelete, file.filename]);
+
+  const handleView = React.useCallback(() => {
+    onView(file.filename);
+  }, [onView, file.filename]);
+
+  return (
+    <TableRow
+      sx={{
+        backgroundColor:
+          theme.palette.mode === 'dark'
+            ? index % 2 === 0
+              ? '#333333'
+              : '#2E2E2E'
+            : index % 2 === 0
+            ? '#F9F9F9'
+            : '#FFFFFF',
+      }}
+    >
+      {/* File Path */}
+      <TableCell
+        align="center"
+        sx={{
+          padding: { xs: '6px', sm: '12px' },
+          color: theme.palette.text.primary,
+        }}
+      >
+        <Typography
+          variant="body2"
+          sx={{ textDecoration: 'underline', wordBreak: 'break-word' }}
+        >
+          {`LIC/TL/IFA/${formatFilePath(getCleanFileName(file.filename))}/${file.fileNumber}`}
+        </Typography>
+      </TableCell>
+
+      {/* File Name */}
+      <TableCell
+        align="center"
+        sx={{
+          padding: { xs: '6px', sm: '12px' },
+          color: theme.palette.text.primary,
+        }}
+      >
+        {getCleanFileName(file.filename)}
+      </TableCell>
+
+      {/* File Type */}
+      <TableCell
+        align="center"
+        sx={{
+          padding: { xs: '6px', sm: '12px' },
+          color: theme.palette.text.primary,
+        }}
+      >
+        {getFileExtension(file.filename)}
+      </TableCell>
+
+      {/* Uploaded Date */}
+      <TableCell
+        align="center"
+        sx={{
+          padding: { xs: '6px', sm: '12px' },
+          color: theme.palette.text.primary,
+        }}
+      >
+        {new Date(file.lastModified).toLocaleString()}
+      </TableCell>
+
+      {/* Manage */}
+      <TableCell align="center" sx={{ padding: { xs: '6px', sm: '12px' } }}>
+        {user?.role === 'Admin' && (
+          <IconButton
+            onClick={handleDelete}
+            aria-label="delete"
+            sx={{ color: buttonColor }}
+          >
+            <DeleteIcon />
+          </IconButton>
+        )}
+        <IconButton
+          aria-label="view"
+          onClick={handleView}
+          sx={{ color: buttonColor }}
+        >
+          <VisibilityIcon />
+        </IconButton>
+      </TableCell>
+    </TableRow>
+  );
+});
+
+FileRow.displayName = 'FileRow';
+
+// Main FileTable component with React.memo
+const FileTable = React.memo(({ files, onDelete, onView, user }) => {
   const theme = useTheme();
   const buttonColor = '#f15a22';
 
-  // Helper function to format the file path by replacing spaces with underscores
-  const formatFilePath = (path) => {
-    return path.replace(/\s+/g, '_'); // Replace spaces with underscores
-  };
+  // Memoized callbacks to prevent unnecessary re-renders
+  const handleDelete = React.useCallback((filename) => {
+    onDelete(filename);
+  }, [onDelete]);
 
-  // Helper function to clean file names for display (remove extension for display)
-  const getCleanFileName = (filename) => {
-    const nameWithoutUnderscores = filename.replace(/_/g, ' '); // Replace underscores with spaces
-    return nameWithoutUnderscores.replace(/\.[^/.]+$/, ''); // Remove the file extension for display
-  };
-
-  // Helper function to extract file extension
-  const getFileExtension = (filename) => {
-    if (!filename) return 'N/A';
-    const parts = filename.split('.');
-    // Check if there's a dot and it's not just a dot file or a directory path
-    if (parts.length > 1 && parts[parts.length - 1] !== '') {
-      return parts.pop().toUpperCase(); // Get the last part and convert to uppercase
-    } else {
-      return 'N/A'; // No extension found or it's a directory path
-    }
-  };
-
-  // Determine file path color based on theme mode
-  const filePathColor = theme.palette.mode === 'dark' ? '#80b3ff' : 'blue'; // Lighter blue for dark mode, regular blue for light mode
+  const handleView = React.useCallback((filename) => {
+    onView(filename);
+  }, [onView]);
 
   return (
     <TableContainer
-    component={Paper}
-    sx={{
-      width: '100%',
-      overflowX: 'auto',
-      backgroundColor: theme.palette.mode === 'dark' ? '#2E2E2E' : '#FFFFFF',
-      color: theme.palette.mode === 'dark' ? '#FFFFFF' : '#000000',
-      '@media (max-width: 600px)': { maxWidth: '100%' },
-    }}
-  >
-    <Table
+      component={Paper}
       sx={{
-        tableLayout: 'fixed',
         width: '100%',
-        minWidth: '600px',
-        borderCollapse: 'collapse',
-        '& th, & td': {
-          borderBottom: `1px solid ${
-            theme.palette.mode === 'dark' ? '#555' : '#ddd'
-          }`,
-        },
+        overflowX: 'auto',
+        backgroundColor: theme.palette.mode === 'dark' ? '#2E2E2E' : '#FFFFFF',
+        color: theme.palette.mode === 'dark' ? '#FFFFFF' : '#000000',
+        '@media (max-width: 600px)': { maxWidth: '100%' },
       }}
-      aria-label="file table"
     >
-      <TableHead>
-        <TableRow>
-          {['File Path', 'File Name', 'File Type', 'Uploaded Date', 'Manage'].map(
-            (header) => (
+      <Table
+        sx={{
+          tableLayout: 'fixed',
+          width: '100%',
+          minWidth: '600px',
+          borderCollapse: 'collapse',
+          '& th, & td': {
+            borderBottom: `1px solid ${
+              theme.palette.mode === 'dark' ? '#555' : '#ddd'
+            }`,
+          },
+        }}
+        aria-label="file table"
+      >
+        <TableHead>
+          <TableRow>
+            {TABLE_HEADERS.map((header) => (
               <TableCell
                 key={header}
                 align="center"
@@ -85,106 +188,29 @@ const FileTable = ({ files, onDelete, onView, user  }) => {
               >
                 {header}
               </TableCell>
-            )
-          )}
-        </TableRow>
-      </TableHead>
-  
-      <TableBody>
-        {files.map((file, index) => (
-          <TableRow
-            key={file.fileId}
-            sx={{
-              backgroundColor:
-                theme.palette.mode === 'dark'
-                  ? index % 2 === 0
-                    ? '#333333'
-                    : '#2E2E2E'
-                  : index % 2 === 0
-                  ? '#F9F9F9'
-                  : '#FFFFFF',
-            }}
-          >
-            {/* File Path */}
-            <TableCell
-              align="center"
-              sx={{
-                padding: { xs: '6px', sm: '12px' },
-                color: theme.palette.text.primary,
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{ textDecoration: 'underline', wordBreak: 'break-word' }}
-              >
-                {`LIC/TL/IFA/${formatFilePath(getCleanFileName(file.filename))}/${file.fileNumber}`}
-              </Typography>
-            </TableCell>
-  
-            {/* File Name */}
-            <TableCell
-              align="center"
-              sx={{
-                padding: { xs: '6px', sm: '12px' },
-                color: theme.palette.text.primary,
-              }}
-            >
-              {getCleanFileName(file.filename)}
-            </TableCell>
-  
-            {/* File Type */}
-            <TableCell
-              align="center"
-              sx={{
-                padding: { xs: '6px', sm: '12px' },
-                color: theme.palette.text.primary,
-              }}
-            >
-              {getFileExtension(file.filename)}
-            </TableCell>
-  
-            {/* Uploaded Date */}
-            <TableCell
-              align="center"
-              sx={{
-                padding: { xs: '6px', sm: '12px' },
-                color: theme.palette.text.primary,
-              }}
-            >
-              {new Date(file.lastModified).toLocaleString()}
-            </TableCell>
-  
-            {/* Manage */}
-            <TableCell align="center" sx={{ padding: { xs: '6px', sm: '12px' } }}>
-              {user?.role === 'Admin' && (
-                <IconButton
-                  onClick={() => onDelete(file.filename)}
-                  aria-label="delete"
-                  sx={{
-                    color: buttonColor,
-                  }}
-                >
-                  <DeleteIcon />
-                </IconButton>
-              )}
-              <IconButton
-                aria-label="view"
-                onClick={() => onView(file.filename)}
-                sx={{
-                  color: buttonColor,
-                }}
-              >
-                <VisibilityIcon />
-              </IconButton>
-            </TableCell>
+            ))}
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  </TableContainer>
-  
-  
+        </TableHead>
+
+        <TableBody>
+          {files.map((file, index) => (
+            <FileRow
+              key={file.fileId || file.filename}
+              file={file}
+              index={index}
+              onDelete={handleDelete}
+              onView={handleView}
+              user={user}
+              theme={theme}
+              buttonColor={buttonColor}
+            />
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
-};
+});
+
+FileTable.displayName = 'FileTable';
 
 export default FileTable;

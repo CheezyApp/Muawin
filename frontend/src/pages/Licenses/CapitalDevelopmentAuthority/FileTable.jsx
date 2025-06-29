@@ -11,9 +11,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import { useFileDownload } from '../../../hooks/useFileDownload';
 
 const FileTable = ({ files, onDelete, user  }) => {
   const theme = useTheme();
+  const { downloadFile, isAuthenticated } = useFileDownload();
   const buttonColor = '#f15a22';
 
   // Helper function to format the file path by replacing spaces with underscores
@@ -37,6 +39,10 @@ const FileTable = ({ files, onDelete, user  }) => {
     } else {
       return 'N/A'; // No extension found or it's a directory path
     }
+  };
+
+  const handleDownload = (filename) => {
+    downloadFile(filename);
   };
 
   // Determine file path color based on theme mode
@@ -117,7 +123,7 @@ const FileTable = ({ files, onDelete, user  }) => {
                 variant="body2"
                 sx={{ textDecoration: 'underline', wordBreak: 'break-word' }}
               >
-                {`LIC/TL/CDA/${formatFilePath(getCleanFileName(file.filename))}/${file.fileNumber}`}
+                {`LIC/TL/CFA/${formatFilePath(getCleanFileName(file.filename))}/${file.fileNumber}`}
               </Typography>
             </TableCell>
   
@@ -169,11 +175,8 @@ const FileTable = ({ files, onDelete, user  }) => {
               )}
               <IconButton
                 aria-label="view"
-                href={`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(
-                  file.filename
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={() => handleDownload(file.filename)}
+                disabled={!isAuthenticated}
                 sx={{
                   color: buttonColor,
                 }}
@@ -186,7 +189,9 @@ const FileTable = ({ files, onDelete, user  }) => {
       </TableBody>
     </Table>
   </TableContainer>
+  
+  
   );
 };
 
-export default FileTable; 
+export default FileTable;

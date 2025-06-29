@@ -169,11 +169,28 @@ const FileTable = ({ files, onDelete, user  }) => {
               )}
               <IconButton
                 aria-label="view"
-                href={`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(
-                  file.filename
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={async () => {
+                  const token = localStorage.getItem('token');
+                  try {
+                    const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(file.filename)}`, {
+                      headers: {
+                        'Authorization': `Bearer ${token}`
+                      }
+                    });
+                    if (!response.ok) throw new Error('Download failed');
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                  } catch (err) {
+                    alert('File download failed.');
+                  }
+                }}
                 sx={{
                   color: buttonColor,
                 }}

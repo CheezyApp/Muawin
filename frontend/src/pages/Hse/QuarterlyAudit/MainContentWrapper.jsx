@@ -5,8 +5,8 @@ import { styled } from '@mui/material/styles';
 const MainContentWrapper = styled(Box)(({ theme, open }) => ({
   flexGrow: 1,
   padding: theme.spacing(4),
-  marginLeft: open ? '240px' : '60px', // Adjust for mini/full drawer state
-  marginTop: '64px', // Adjust for AppBar height
+  marginLeft: '0', // No left margin on mobile
+  marginTop: '64px',
   transition: theme.transitions.create(['margin'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.enteringScreen,
@@ -15,6 +15,9 @@ const MainContentWrapper = styled(Box)(({ theme, open }) => ({
   color: theme.palette.mode === 'dark' ? '#FFF' : '#000',
   minHeight: '100vh',
   overflow: 'hidden',
+  [theme.breakpoints.up('sm')]: {
+    marginLeft: open ? '240px' : '60px',
+  },
 }));
 
 export default MainContentWrapper;

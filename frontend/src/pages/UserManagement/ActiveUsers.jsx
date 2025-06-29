@@ -24,6 +24,11 @@ import {
   ListItemIcon,
   ListItemText,
   useTheme,
+  useMediaQuery,
+  Stack,
+  Card,
+  CardContent,
+  Grid,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -54,6 +59,8 @@ const ActiveUsers = () => {
   const { zones, addBranch } = useZones();
   const theme = useTheme();
   const { error, handleError, clearError } = useErrorHandler();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isSmallMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,6 +83,8 @@ const ActiveUsers = () => {
 
   const [passwordCopiedSnackbarOpen, setPasswordCopiedSnackbarOpen] = useState(false);
   const [passwordResetSnackbarOpen, setPasswordResetSnackbarOpen] = useState(false); // For reset password
+
+  const [modulesSnackbarOpen, setModulesSnackbarOpen] = useState(false);
 
   const handleUserCreated = () => {
     setSnackbarOpen(true);
@@ -172,6 +181,7 @@ const ActiveUsers = () => {
   const handleModulesUpdated = () => {
     fetchUsers();
     handleEditModulesDrawerClose();
+    setModulesSnackbarOpen(true);
   };
 
   const handleSelectUser = (userId) => {
@@ -209,25 +219,25 @@ const ActiveUsers = () => {
         return;
       }
 
-      for (let userId of selectedUsers) {
-        await axios.delete(`${process.env.REACT_APP_API_BASE_URL}/users/${userId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-      }
+      await Promise.all(
+        selectedUsers.map(userId =>
+          axios.delete(`${process.env.REACT_APP_API_BASE_URL}/users/${userId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
+        )
+      );
 
-      setUsers(users.filter((user) => !selectedUsers.includes(user._id)));
-      setSelectedUsers([]);
       setDeleteSnackbarOpen(true);
+      setSelectedUsers([]);
+      fetchUsers();
     } catch (error) {
       handleError(new Error('Failed to delete users. Please try again.'));
     }
   };
 
   const handleResetPassword = async (userId) => {
-    // Generate a new random password
-    const newPassword = generateRandomPassword();
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -235,26 +245,23 @@ const ActiveUsers = () => {
         return;
       }
 
-      // Send the reset request to the server
-      const response = await axios.put(`${process.env.REACT_APP_API_BASE_URL}/users/${userId}/resetPassword`, {
-        newPassword,
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const newPassword = generateRandomPassword();
+      const response = await axios.patch(
+        `${process.env.REACT_APP_API_BASE_URL}/users/${userId}/reset-password`,
+        { newPassword },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
-      });
-
-      const updatedUser = response.data.user;
-
-      // Update the state with the new password for the specific user
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user._id === userId ? { ...user, plainPassword: updatedUser.plainPassword } : user
-        )
       );
 
-      // Show the "Password Reset Successfully" snackbar
-      setPasswordResetSnackbarOpen(true);
+      if (response.status === 200) {
+        setResetPassword(newPassword);
+        setResetSnackbarOpen(true);
+        fetchUsers();
+      }
     } catch (error) {
       handleError(new Error('Failed to reset password. Please try again.'));
     }
@@ -283,12 +290,74 @@ const ActiveUsers = () => {
     setEditBranchNameOpen(false);
   };
 
+  // Mobile user card component
+  const MobileUserCard = ({ user }) => (
+    <Card sx={{ mb: 2, p: 2 }}>
+      <CardContent sx={{ p: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+          <Checkbox
+            checked={selectedUsers.includes(user._id)}
+            onChange={() => handleSelectUser(user._id)}
+            size="small"
+          />
+          <Typography variant="h6" sx={{ flex: 1, ml: 1 }}>
+            {user.name}
+          </Typography>
+          <IconButton 
+            size="small" 
+            onClick={(event) => handleEditClick(event, user)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Box>
+        
+        <Grid container spacing={1} sx={{ fontSize: '0.875rem' }}>
+          <Grid item xs={12}>
+            <Typography variant="body2" color="textSecondary">
+              <strong>Email:</strong> {user.email}
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="textSecondary">
+              <strong>Branch:</strong> {user.branch || 'N/A'}
+            </Typography>
+          </Grid>
+          <Grid item xs={6}>
+            <Typography variant="body2" color="textSecondary">
+              <strong>Role:</strong> {user.role || 'N/A'}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+              <Typography variant="body2" color="textSecondary" sx={{ mr: 1 }}>
+                <strong>Password:</strong>
+              </Typography>
+              {user.plainPassword ? (
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    navigator.clipboard.writeText(user.plainPassword);
+                    setPasswordCopiedSnackbarOpen(true);
+                  }}
+                >
+                  <ContentCopyIcon sx={{ color: '#f15a22', fontSize: '1rem' }} />
+                </IconButton>
+              ) : (
+                <Typography variant="body2" color="textSecondary">N/A</Typography>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <ErrorBoundary>
       <MainContentWrapper>
         <Box sx={{ maxWidth: '100%', paddingLeft: 0 }}>
           <Typography
-            variant="h3"
+            variant={isMobile ? "h4" : "h3"}
             sx={{
               fontWeight: 'bold',
               display: 'flex',
@@ -302,150 +371,275 @@ const ActiveUsers = () => {
 
           <Divider sx={{ mb: 0.5, mt: 1 }} />
 
-          <Toolbar
-            disableGutters
-            sx={{
-              display: 'flex',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-              mt: 0,
-            }}
-          >
-            <Button
-              variant="text"
-              startIcon={<AddIcon />}
-              sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
-              onClick={handleDrawerOpen}
-            >
-              Add a user
-            </Button>
-            <Button
-              variant="text"
-              startIcon={<RefreshIcon />}
-              sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
-              onClick={fetchUsers}
-            >
-              Refresh
-            </Button>
-            <Button
-              variant="text"
-              startIcon={<DeleteIcon />}
-              sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
-              disabled={selectedUsers.length === 0}
-              onClick={handleDeleteUsers}
-            >
-              Delete user
-            </Button>
-            <Button
-              variant="text"
-              startIcon={<LockResetIcon />}
-              sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
-              disabled={selectedUsers.length !== 1}
-              onClick={() => handleResetPassword(selectedUsers[0])}
-            >
-              Reset password
-            </Button>
-            <Button
-              variant="text"
-              startIcon={<AddIcon />}
-              sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
-              onClick={handleBranchDrawerOpen}
-            >
-              Add a branch
-            </Button>
-
-            <Button
-              variant="text"
-              startIcon={<EditLocationAltIcon />}
-              sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
-              onClick={handleEditBranchNameOpen}
-            >
-              Edit branch
-            </Button>
-
-            <Button
-              variant="text"
-              startIcon={<FileUploadIcon />}
-              sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
-              onClick={handleUploadDialogOpen}
-            >
-              Upload accounts
-            </Button>
-
-            <TextField
-              variant="outlined"
-              size="small"
-              placeholder="Search active users list"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ width: 300, marginLeft: 'auto' }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
+          {/* Mobile Toolbar */}
+          {isMobile ? (
+            <Stack spacing={2} sx={{ mt: 2 }}>
+              <TextField
+                variant="outlined"
+                size="small"
+                placeholder="Search active users list"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              
+              <Grid container spacing={1}>
+                <Grid item xs={6}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={handleDrawerOpen}
+                    fullWidth
+                    size="small"
+                    sx={{ textTransform: 'none', color: '#f15a22', borderColor: '#f15a22' }}
+                  >
+                    Add User
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<RefreshIcon />}
+                    onClick={fetchUsers}
+                    fullWidth
+                    size="small"
+                    sx={{ textTransform: 'none', color: '#f15a22', borderColor: '#f15a22' }}
+                  >
+                    Refresh
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<DeleteIcon />}
+                    disabled={selectedUsers.length === 0}
+                    onClick={handleDeleteUsers}
+                    fullWidth
+                    size="small"
+                    sx={{ textTransform: 'none', color: '#f15a22', borderColor: '#f15a22' }}
+                  >
+                    Delete
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<LockResetIcon />}
+                    disabled={selectedUsers.length !== 1}
+                    onClick={() => handleResetPassword(selectedUsers[0])}
+                    fullWidth
+                    size="small"
+                    sx={{ textTransform: 'none', color: '#f15a22', borderColor: '#f15a22' }}
+                  >
+                    Reset Pwd
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={handleBranchDrawerOpen}
+                    fullWidth
+                    size="small"
+                    sx={{ textTransform: 'none', color: '#f15a22', borderColor: '#f15a22' }}
+                  >
+                    Add Branch
+                  </Button>
+                </Grid>
+                <Grid item xs={6}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<EditLocationAltIcon />}
+                    onClick={handleEditBranchNameOpen}
+                    fullWidth
+                    size="small"
+                    sx={{ textTransform: 'none', color: '#f15a22', borderColor: '#f15a22' }}
+                  >
+                    Edit Branch
+                  </Button>
+                </Grid>
+                <Grid item xs={12}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<FileUploadIcon />}
+                    onClick={handleUploadDialogOpen}
+                    fullWidth
+                    size="small"
+                    sx={{ textTransform: 'none', color: '#f15a22', borderColor: '#f15a22' }}
+                  >
+                    Upload Accounts
+                  </Button>
+                </Grid>
+              </Grid>
+              
+              <HoverPopoverButton />
+            </Stack>
+          ) : (
+            /* Desktop Toolbar */
+            <Toolbar
+              disableGutters
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+                mt: 0,
+                flexWrap: 'wrap',
+                gap: 1,
               }}
-            />
-            {/* Hover Button with Popover */}
-            <HoverPopoverButton />
-          </Toolbar>
+            >
+              <Button
+                variant="text"
+                startIcon={<AddIcon />}
+                sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
+                onClick={handleDrawerOpen}
+              >
+                Add a user
+              </Button>
+              <Button
+                variant="text"
+                startIcon={<RefreshIcon />}
+                sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
+                onClick={fetchUsers}
+              >
+                Refresh
+              </Button>
+              <Button
+                variant="text"
+                startIcon={<DeleteIcon />}
+                sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
+                disabled={selectedUsers.length === 0}
+                onClick={handleDeleteUsers}
+              >
+                Delete user
+              </Button>
+              <Button
+                variant="text"
+                startIcon={<LockResetIcon />}
+                sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
+                disabled={selectedUsers.length !== 1}
+                onClick={() => handleResetPassword(selectedUsers[0])}
+              >
+                Reset password
+              </Button>
+              <Button
+                variant="text"
+                startIcon={<AddIcon />}
+                sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
+                onClick={handleBranchDrawerOpen}
+              >
+                Add a branch
+              </Button>
 
-          <TableContainer component={Paper} sx={{ mt: 2, maxWidth: '100%' }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell align="center" sx={{ fontWeight: 'bold', padding: '12px' }}>
-                    <Checkbox
-                      checked={selectedUsers.length === users.length && users.length > 0}
-                      onChange={handleSelectAllUsers}
-                    />
-                  </TableCell>
-                  <TableCell align="left" sx={{ fontWeight: 'bold', padding: '12px' }}>Display Name</TableCell>
-                  <TableCell align="left" sx={{ fontWeight: 'bold', padding: '12px' }}>Email</TableCell>
-                  <TableCell align="left" sx={{ fontWeight: 'bold', padding: '12px' }}>Branch</TableCell>
-                  <TableCell align="left" sx={{ fontWeight: 'bold', padding: '12px' }}>Role</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold', padding: '12px' }}>Generated Password</TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 'bold', padding: '12px' }}>Action</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user._id}>
-                    <TableCell align="center" sx={{ padding: '12px' }}>
+              <Button
+                variant="text"
+                startIcon={<EditLocationAltIcon />}
+                sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
+                onClick={handleEditBranchNameOpen}
+              >
+                Edit branch
+              </Button>
+
+              <Button
+                variant="text"
+                startIcon={<FileUploadIcon />}
+                sx={{ marginRight: 2, textTransform: 'none', color: '#f15a22' }}
+                onClick={handleUploadDialogOpen}
+              >
+                Upload accounts
+              </Button>
+
+              <TextField
+                variant="outlined"
+                size="small"
+                placeholder="Search active users list"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{ width: 300, marginLeft: 'auto' }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              {/* Hover Button with Popover */}
+              <HoverPopoverButton />
+            </Toolbar>
+          )}
+
+          {/* Mobile User Cards */}
+          {isMobile ? (
+            <Box sx={{ mt: 2 }}>
+              {filteredUsers.map((user) => (
+                <MobileUserCard key={user._id} user={user} />
+              ))}
+            </Box>
+          ) : (
+            /* Desktop Table */
+            <TableContainer component={Paper} sx={{ mt: 2, maxWidth: '100%' }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', padding: '12px' }}>
                       <Checkbox
-                        checked={selectedUsers.includes(user._id)}
-                        onChange={() => handleSelectUser(user._id)}
+                        checked={selectedUsers.length === users.length && users.length > 0}
+                        onChange={handleSelectAllUsers}
                       />
                     </TableCell>
-                    <TableCell align="left" sx={{ padding: '12px' }}>{user.name}</TableCell>
-                    <TableCell align="left" sx={{ padding: '12px' }}>{user.email}</TableCell>
-                    <TableCell align="left" sx={{ padding: '12px' }}>{user.branch || 'N/A'}</TableCell>
-                    <TableCell align="left" sx={{ padding: '12px' }}>{user.role || 'N/A'}</TableCell>
-                    <TableCell align="center" sx={{ padding: '12px' }}>
-                      {user.plainPassword ? (
-                        <IconButton
-                          onClick={() => {
-                            navigator.clipboard.writeText(user.plainPassword); // Copy the password to clipboard
-                            setPasswordCopiedSnackbarOpen(true); // Show the correct snackbar
-                          }}
-                        >
-                          <ContentCopyIcon sx={{ color: '#f15a22' }} />
-                        </IconButton>
-                      ) : (
-                        'N/A'
-                      )}
-                    </TableCell>
-                    <TableCell align="center" sx={{ padding: '12px' }}>
-                      <IconButton onClick={(event) => handleEditClick(event, user)}>
-                        <EditIcon />
-                      </IconButton>
-                    </TableCell>
+                    <TableCell align="left" sx={{ fontWeight: 'bold', padding: '12px' }}>Display Name</TableCell>
+                    <TableCell align="left" sx={{ fontWeight: 'bold', padding: '12px' }}>Email</TableCell>
+                    <TableCell align="left" sx={{ fontWeight: 'bold', padding: '12px' }}>Branch</TableCell>
+                    <TableCell align="left" sx={{ fontWeight: 'bold', padding: '12px' }}>Role</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', padding: '12px' }}>Generated Password</TableCell>
+                    <TableCell align="center" sx={{ fontWeight: 'bold', padding: '12px' }}>Action</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user._id}>
+                      <TableCell align="center" sx={{ padding: '12px' }}>
+                        <Checkbox
+                          checked={selectedUsers.includes(user._id)}
+                          onChange={() => handleSelectUser(user._id)}
+                        />
+                      </TableCell>
+                      <TableCell align="left" sx={{ padding: '12px' }}>{user.name}</TableCell>
+                      <TableCell align="left" sx={{ padding: '12px' }}>{user.email}</TableCell>
+                      <TableCell align="left" sx={{ padding: '12px' }}>{user.branch || 'N/A'}</TableCell>
+                      <TableCell align="left" sx={{ padding: '12px' }}>{user.role || 'N/A'}</TableCell>
+                      <TableCell align="center" sx={{ padding: '12px' }}>
+                        {user.plainPassword ? (
+                          <IconButton
+                            onClick={() => {
+                              navigator.clipboard.writeText(user.plainPassword);
+                              setPasswordCopiedSnackbarOpen(true);
+                            }}
+                          >
+                            <ContentCopyIcon sx={{ color: '#f15a22' }} />
+                          </IconButton>
+                        ) : (
+                          'N/A'
+                        )}
+                      </TableCell>
+                      <TableCell align="center" sx={{ padding: '12px' }}>
+                        <IconButton onClick={(event) => handleEditClick(event, user)}>
+                          <EditIcon />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
 
           <Menu
             anchorEl={menuAnchorEl}
@@ -505,9 +699,9 @@ const ActiveUsers = () => {
           <UploadAccounts open={uploadDialogOpen} onClose={handleUploadDialogClose} onUsersAdded={fetchUsers} />
 
           <EditBranchNameDrawer
-            open={editBranchNameOpen} // Pass the state to control the visibility of the drawer
+            open={editBranchNameOpen}
             onBranchUpdated={handleBranchUpdated}
-            onClose={handleEditBranchNameClose} // Pass the function to handle closing the drawer
+            onClose={handleEditBranchNameClose}
           />
 
           <Snackbar
@@ -570,6 +764,17 @@ const ActiveUsers = () => {
           >
             <Alert onClose={() => setResetSnackbarOpen(false)} severity="info" sx={{ width: '100%', backgroundColor: '#ffdd00', color: '#7c402e' }}>
               Password reset successfully! New password: {resetPassword}
+            </Alert>
+          </Snackbar>
+
+          <Snackbar
+            open={modulesSnackbarOpen}
+            autoHideDuration={3000}
+            onClose={() => setModulesSnackbarOpen(false)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          >
+            <Alert onClose={() => setModulesSnackbarOpen(false)} severity="success" sx={{ width: '100%' }}>
+              Assigned modules updated successfully!
             </Alert>
           </Snackbar>
         </Box>

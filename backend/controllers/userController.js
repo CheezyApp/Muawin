@@ -3,6 +3,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const XLSX = require('xlsx');
 
 // Create a new user
 const createUser = async (req, res) => {
@@ -259,6 +261,82 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Multer setup for memory storage
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Bulk upload users from Excel
+const uploadUsersFromExcel = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    // Parse the Excel file from buffer
+    const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+    let created = 0;
+    let failed = 0;
+    let errors = [];
+    let createdUsers = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      // Expected columns: firstName, lastName, displayName, username, password, role, zone, branch
+      const missingFields = [];
+      if (!row.firstName) missingFields.push('firstName');
+      if (!row.lastName) missingFields.push('lastName');
+      if (!row.displayName) missingFields.push('displayName');
+      if (!row.username) missingFields.push('username');
+      if (!row.password) missingFields.push('password');
+      if (!row.role) missingFields.push('role');
+      if (!row.zone) missingFields.push('zone');
+      if (!row.branch) missingFields.push('branch');
+      if (missingFields.length > 0) {
+        failed++;
+        errors.push({ row: i + 2, error: `Missing fields: ${missingFields.join(', ')}` });
+        continue;
+      }
+      // Check for duplicate email
+      const email = `${row.username}@cheezious.com`;
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        failed++;
+        errors.push({ row: i + 2, error: 'Email already exists' });
+        continue;
+      }
+      // Hash password
+      const hashedPassword = await bcrypt.hash(row.password, 10);
+      // Create user
+      const newUser = new User({
+        name: `${row.firstName} ${row.lastName}`,
+        displayName: row.displayName,
+        username: row.username,
+        email,
+        password: hashedPassword,
+        plainPassword: row.password,
+        role: row.role,
+        zone: row.zone,
+        branch: row.branch,
+        registeredModules: row.modules ? row.modules.split(',').map(m => m.trim()) : [],
+      });
+      try {
+        await newUser.save();
+        created++;
+        createdUsers.push({ email });
+      } catch (err) {
+        failed++;
+        errors.push({ row: i + 2, error: err.message });
+      }
+    }
+    res.json({ created, failed, errors, createdUsers });
+  } catch (error) {
+    console.error('Bulk upload error:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
 module.exports = {
   createUser,
   signInUser,
@@ -267,4 +345,6 @@ module.exports = {
   updateUserModules,
   deleteUser,
   resetPassword,
+  upload,
+  uploadUsersFromExcel,
 }; 

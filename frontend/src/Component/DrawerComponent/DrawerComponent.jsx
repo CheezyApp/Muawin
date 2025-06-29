@@ -1,6 +1,6 @@
 // src/Component/DrawerComponent/DrawerComponent.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Drawer as MuiDrawer,
   SwipeableDrawer,
@@ -14,6 +14,7 @@ import {
   Toolbar,
   Tooltip,
   useMediaQuery,
+  Backdrop,
 } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
@@ -79,6 +80,27 @@ export default function DrawerComponent({
 
   // Track which submenus are expanded
   const [openMenu, setOpenMenu] = useState({});
+
+  // Handle click outside for desktop drawer
+  const handleBackdropClick = () => {
+    if (desktopOpen && !isMobile) {
+      setDesktopOpen(false);
+    }
+  };
+
+  // Add keyboard event listener for Escape key
+  useEffect(() => {
+    const handleEscapeKey = (event) => {
+      if (event.key === 'Escape' && desktopOpen && !isMobile) {
+        setDesktopOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscapeKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [desktopOpen, isMobile, setDesktopOpen]);
 
   // Check if user has access to a module
   const hasAccess = (moduleName, submoduleName = '') => {
@@ -312,8 +334,21 @@ export default function DrawerComponent({
 
   // Desktop => permanent mini/full drawer
   return (
-    <DrawerStyled variant="permanent" open={desktopOpen}>
-      {drawerContent}
-    </DrawerStyled>
+    <>
+      <DrawerStyled variant="permanent" open={desktopOpen}>
+        {drawerContent}
+      </DrawerStyled>
+      {/* Backdrop for desktop drawer - only show when drawer is open */}
+      {desktopOpen && (
+        <Backdrop
+          open={desktopOpen}
+          onClick={handleBackdropClick}
+          sx={{
+            zIndex: theme.zIndex.drawer - 1,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          }}
+        />
+      )}
+    </>
   );
 }

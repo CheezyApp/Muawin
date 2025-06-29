@@ -1,77 +1,126 @@
-import React, { useState, useEffect,useCallback  } from 'react';
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTheme } from '@mui/material/styles';
+import {
+  Box,
+  Grid,
+  Typography,
+  FormControl,
+  Select,
+  MenuItem,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  Snackbar,
+  LinearProgress,
+} from '@mui/material';
+import { Alert as MuiAlert } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import CircularProgress from '@mui/material/CircularProgress';
+import Compressor from 'compressorjs';
+
+// Import components
 import MainContentWrapper from './MainContentWrapper';
 import SearchBar from './SearchBar';
-import AddFileButton from './AddFileButton';
-import FileTable from './FileTable';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import FormControl from '@mui/material/FormControl';
-import Snackbar from '@mui/material/Snackbar';
-import MuiAlert from '@mui/material/Alert';
 import HoverPopoverButton from './HoverPopoverButton';
-import Compressor from 'compressorjs';
-import LinearProgress from '@mui/material/LinearProgress';
+
+// Import reusable components
+import AddFileButton from '../../../components/AddFileButton';
+import FileTable from '../../../components/FileTable';
+
+// Import custom hooks
+import { useDebounce } from '../../../hooks/useDebounce';
+import { useFileCache } from '../../../hooks/useFileCache';
+import { useBatchOperations } from '../../../hooks/useBatchOperations';
+import BatchProgress from '../../../components/BatchProgress';
+
+// Constants
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_DOCUMENT_SIZE = 50 * 1024 * 1024; // 50MB
+const CACHE_EXPIRY_TIME = 5 * 60 * 1000; // 5 minutes
+const AUTO_REFRESH_DELAY = 1000; // 1 second delay for auto-refresh
 
 const IslamabadFoodAuthority = ({ open, user }) => {
   const theme = useTheme();
-  const headingColor = theme.palette.mode === 'dark' ? '#f15a22' : '#000000';
-  const [files, setFiles] = useState([]); // State for files
-  const [searchQuery, setSearchQuery] = useState(''); // State for search query
-  // const [isDialogOpen, setIsDialogOpen] = useState(false); // State for dialogs
-  // const [dialogMessage, setDialogMessage] = useState(''); // State for messages
-  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false); // State for delete confirmation dialog
-  const [fileToDelete, setFileToDelete] = useState(null); // Store file to delete
-  const [loading, setLoading] = useState(false); // State for managing table refresh
-  const [zones, setZones] = useState([]); // State for zones
-  const [branches, setBranches] = useState([]); // State for branches
-  const [selectedZone, setSelectedZone] = useState(user?.role === 'Admin' ? '' : user?.zone); // State for selected zone
-  const [selectedBranch, setSelectedBranch] = useState(user?.role === 'Admin' ? '' : user?.branch); // State for selected branch
-  const [snackbarOpen, setSnackbarOpen] = useState(false); // State for snackbar
-  const [snackbarMessage, setSnackbarMessage] = useState(''); // State for snackbar message
-  const [snackbarSeverity, setSnackbarSeverity] = useState('success'); // State for snackbar severity
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const headingColor = theme.palette.mode === 'dark' ? '#f5f5f5' : '#333';
+
+  // State management
+  const [zones, setZones] = useState([]);
+  const [branches, setBranches] = useState([]);
+  const [selectedZone, setSelectedZone] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+  const [autoRefreshTimer, setAutoRefreshTimer] = useState(null);
 
-  // Define maximum file sizes in bytes
-  const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
-  const MAX_DOCUMENT_SIZE = 20 * 1024 * 1024; // 20 MB
+  // Custom hooks
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const { getCachedFiles, setCachedFiles, clearCache } = useFileCache();
+  const {
+    batchUpload,
+    batchDelete,
+    batchProgress,
+    isBatchProcessing,
+    getOverallProgress,
+    getStatusSummary,
+  } = useBatchOperations();
 
-  // Supported file types
-  // const supportedFileTypes = [
-  //   'image/png',
-  //   'image/jpeg',
-  //   'image/webp',
-  //   'application/pdf',
-  //   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-  //   'application/vnd.ms-excel', // .xls
-  //   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-  //   'text/csv',
-  //   'application/txt'
-  // ];
+  // Memoized filtered files
+  const filteredFiles = useMemo(() => {
+    return files.filter(file =>
+      file?.filename?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      file?.fileNumber?.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+    );
+  }, [files, debouncedSearchQuery]);
 
-  // Fetch zones from the server
-  const fetchZones = async () => {
+  // Auto-refresh function
+  const triggerAutoRefresh = useCallback(() => {
+    // Clear any existing timer
+    if (autoRefreshTimer) {
+      clearTimeout(autoRefreshTimer);
+    }
+
+    // Set new timer for auto-refresh
+    const timer = setTimeout(() => {
+      if (selectedZone && selectedBranch) {
+        fetchFiles(true); // Force refresh to get latest data
+      }
+    }, AUTO_REFRESH_DELAY);
+
+    setAutoRefreshTimer(timer);
+  }, [selectedZone, selectedBranch, autoRefreshTimer]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoRefreshTimer) {
+        clearTimeout(autoRefreshTimer);
+      }
+    };
+  }, [autoRefreshTimer]);
+
+  // Fetch zones
+  const fetchZones = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token'); // Get token from localStorage
+      const token = localStorage.getItem('token');
       if (!token) {
         console.error('Authentication token not found for fetching zones.');
-        return; // Exit if no token
+        return;
       }
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/zones`, {
         headers: {
-          'Authorization': `Bearer ${token}` // Add token to headers
+          'Authorization': `Bearer ${token}`
         }
       });
       const zonesData = await response.json();
@@ -79,19 +128,19 @@ const IslamabadFoodAuthority = ({ open, user }) => {
     } catch (error) {
       console.error('Error fetching zones:', error);
     }
-  };
+  }, []);
 
   // Fetch branches for the selected zone
-  const fetchBranches = async (zoneName) => {
+  const fetchBranches = useCallback(async (zoneName) => {
     try {
-      const token = localStorage.getItem('token'); // Get token from localStorage
+      const token = localStorage.getItem('token');
       if (!token) {
         console.error('Authentication token not found for fetching branches.');
-        return; // Exit if no token
+        return;
       }
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/zones/${zoneName}/branches`, {
         headers: {
-          'Authorization': `Bearer ${token}` // Add token to headers
+          'Authorization': `Bearer ${token}`
         }
       });
       const branchesData = await response.json();
@@ -99,295 +148,315 @@ const IslamabadFoodAuthority = ({ open, user }) => {
     } catch (error) {
       console.error('Error fetching branches:', error);
     }
-  };
+  }, []);
 
-  // Fetch the files for the specified zone and branch
-  const fetchFiles = useCallback(async () => {
-    if (!selectedZone || !selectedBranch) return;
-  
+  // Fetch files with caching
+  const fetchFiles = useCallback(async (forceRefresh = false) => {
+    if (!selectedZone || !selectedBranch) {
+      console.log('No zone or branch selected, skipping fetch');
+      setLoading(false);
+      return;
+    }
+
+    // Check cache first (only if not forcing refresh)
+    if (!forceRefresh) {
+      const cachedData = getCachedFiles(selectedZone, selectedBranch);
+      if (cachedData && (Date.now() - cachedData.timestamp) < CACHE_EXPIRY_TIME) {
+        setFiles(cachedData.files);
+        setLoading(false);
+        return;
+      }
+    }
+
     setLoading(true);
+    
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.error('Fetch timeout - taking too long');
+      setSnackbarMessage('Request timed out. Please try again.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      setLoading(false);
+    }, 30000); // 30 second timeout
+
     try {
-      const token = localStorage.getItem('token'); // Get token from localStorage
+      const token = localStorage.getItem('token');
       if (!token) {
         console.error('Authentication token not found for fetching files.');
         setSnackbarMessage('Authentication required to fetch files.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
-        setFiles([]); // Clear files if unauthorized
+        setFiles([]);
         setLoading(false);
-        return; // Exit if no token
+        clearTimeout(timeoutId);
+        return;
       }
 
       const encodedZone = encodeURIComponent(selectedZone.trim());
       const encodedBranch = encodeURIComponent(selectedBranch.trim());
-  
-      console.log('Fetching files with token:', token); // Add this console log
+
+      console.log(`Fetching files for zone: ${encodedZone}, branch: ${encodedBranch}`);
+
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/files/licenses-tradelicenses-ifa/${encodedZone}/${encodedBranch}`, {
         headers: {
-          'Authorization': `Bearer ${token}` // Add token to headers
+          'Authorization': `Bearer ${token}`
         }
       });
-  
+
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         const filesData = await response.json();
+        console.log(`Successfully fetched ${filesData.length} files`);
         setFiles(filesData);
+        // Cache the results
+        setCachedFiles(selectedZone, selectedBranch, filesData);
       } else if (response.status === 404) {
-        console.error('No files found for this zone and branch.');
+        console.log('No files found for this zone and branch.');
         setFiles([]);
+        setCachedFiles(selectedZone, selectedBranch, []);
       } else {
         console.error('Error fetching files:', response.statusText);
+        setSnackbarMessage(`Failed to fetch files: ${response.statusText}`);
+        setSnackbarSeverity('error');
+        setSnackbarOpen(true);
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Error fetching files:', error);
+      setSnackbarMessage(`Error fetching files: ${error.message}`);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      setFiles([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  }, [selectedZone, selectedBranch]);
-
-  useEffect(() => {
-    fetchZones(); // Fetch zones when component mounts
-  }, []);
-
-  useEffect(() => {
-    if (selectedZone) {
-      fetchBranches(selectedZone); // Fetch branches when a zone is selected
-    }
-  }, [selectedZone]);
-
-  useEffect(() => {
-    if (selectedZone && selectedBranch) {
-      fetchFiles(); // Fetch files when component mounts or when zone/branch changes
-    }
-  }, [selectedZone, selectedBranch,fetchFiles]);
+  }, [selectedZone, selectedBranch, getCachedFiles, setCachedFiles]);
 
   // Helper function to check if file is an image
-  const isImageFile = (file) => {
+  const isImageFile = useCallback((file) => {
     return file.type.startsWith('image/');
-  };
+  }, []);
 
-  // Handle file upload
-  const handleFileSelect = async (file) => {
-    if (file) {
-      // Check file size before proceeding
+  // Optimistic file upload with batch support and auto-refresh
+  const handleFileSelect = useCallback(async (selectedFiles) => {
+    const filesArray = Array.isArray(selectedFiles) ? selectedFiles : [selectedFiles];
+    
+    if (filesArray.length === 0) return;
+
+    // Validate all files first
+    const validFiles = [];
+    const invalidFiles = [];
+
+    filesArray.forEach(file => {
       const isImage = isImageFile(file);
       const maxSize = isImage ? MAX_IMAGE_SIZE : MAX_DOCUMENT_SIZE;
       const fileTypeLabel = isImage ? 'image' : 'document/other file type';
 
       if (file.size > maxSize) {
-        setSnackbarMessage(`File size exceeds the maximum limit of ${maxSize / (1024 * 1024)} MB for ${fileTypeLabel}.`);
-        setSnackbarSeverity('error');
+        invalidFiles.push({
+          file: file.name,
+          error: `File size exceeds the maximum limit of ${maxSize / (1024 * 1024)} MB for ${fileTypeLabel}.`
+        });
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    // Show errors for invalid files
+    if (invalidFiles.length > 0) {
+      const errorMessage = invalidFiles.map(f => `${f.file}: ${f.error}`).join('\n');
+      setSnackbarMessage(`Some files were invalid:\n${errorMessage}`);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+
+    if (validFiles.length === 0) return;
+
+    // Add files optimistically to UI
+    const optimisticFiles = validFiles.map(file => ({
+      filename: file.name.replace(/\s+/g, '_'),
+      filetype: file.type,
+      lastModified: new Date().toISOString(),
+      fileId: `temp-${Date.now()}-${Math.random()}`,
+      fileNumber: '00000',
+      isOptimistic: true
+    }));
+
+    setFiles(prev => [...prev, ...optimisticFiles]);
+
+    // Start batch upload
+    await batchUpload(
+      validFiles,
+      async (file, progressCallback) => {
+        return await uploadSingleFile(file, progressCallback);
+      },
+      (fileId, progress, fileName) => {
+        // Update progress for individual files
+        console.log(`Progress for ${fileName}: ${progress}%`);
+      },
+      (results, errors) => {
+        // Remove optimistic files and add real ones
+        setFiles(prev => {
+          const withoutOptimistic = prev.filter(f => !f.isOptimistic);
+          const realFiles = results.map(result => result.result);
+          return [...withoutOptimistic, ...realFiles];
+        });
+
+        // Show results
+        if (results.length > 0) {
+          setSnackbarMessage(`Successfully uploaded ${results.length} file(s). Auto-refreshing table...`);
+          setSnackbarSeverity('success');
+          // Trigger auto-refresh after successful upload
+          triggerAutoRefresh();
+        }
+        if (errors.length > 0) {
+          setSnackbarMessage(`Failed to upload ${errors.length} file(s).`);
+          setSnackbarSeverity('error');
+        }
         setSnackbarOpen(true);
-        return; // Stop the upload process
+      }
+    );
+  }, [isImageFile, batchUpload, triggerAutoRefresh]);
+
+  // Upload single file
+  const uploadSingleFile = useCallback(async (file, progressCallback) => {
+    const normalizedFileName = file.name.replace(/\s+/g, '_');
+    
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required to upload files.');
       }
 
-      setIsUploading(true);
-      setUploadProgress(0);
-      // Normalize filename to avoid spaces
-      const normalizedFileName = file.name.replace(/\s+/g, '_');
-      
-      console.log('Original file details:', {
-        name: file.name,
-        type: file.type,
-        size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`
-      });
-      
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          console.error('Authentication token not found for file upload.');
-          setSnackbarMessage('Authentication required to upload files.');
-          setSnackbarSeverity('error');
-          setSnackbarOpen(true);
-          setIsUploading(false);
-          return;
-        }
-
-        // Check if file is an image for client-side compression
-        if (isImage) {
-          console.log('Starting image compression...');
+      // Handle image compression
+      let fileToUpload = file;
+      if (isImageFile(file)) {
+        fileToUpload = await new Promise((resolve, reject) => {
           new Compressor(file, {
             quality: 0.8,
             maxWidth: 1920,
             maxHeight: 1080,
-            success(result) {
-              console.log('Image compression successful:', {
-                originalSize: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-                compressedSize: `${(result.size / (1024 * 1024)).toFixed(2)} MB`,
-                compressionRatio: `${((1 - (result.size / file.size)) * 100).toFixed(2)}%`
-              });
-              uploadCompressedFile(result, normalizedFileName, token);
-            },
-            error(err) {
-              console.error('Image compression error:', err);
-              setSnackbarMessage('Error compressing image. Uploading original file instead.');
-              setSnackbarSeverity('warning');
-              setSnackbarOpen(true);
-              uploadCompressedFile(file, normalizedFileName, token);
-            },
+            success: resolve,
+            error: reject,
           });
-        } else {
-          console.log('Non-image file detected, proceeding with direct upload without client-side compression');
-          // For non-image files, upload directly
-          uploadCompressedFile(file, normalizedFileName, token);
-        }
-      } catch (error) {
-        console.error('Error in file handling:', error);
-        setSnackbarMessage('Failed to process file.');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-        setIsUploading(false);
+        });
       }
-    }
-  };
 
-  // Helper function to handle the actual upload
-  const uploadCompressedFile = async (file, normalizedFileName, token) => {
-    const formData = new FormData();
-    formData.append('file', new File([file], normalizedFileName, { type: file.type }));
+      // Upload file
+      const formData = new FormData();
+      formData.append('file', new File([fileToUpload], normalizedFileName, { type: fileToUpload.type }));
+
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded * 100) / event.total);
+            progressCallback?.(progress);
+          }
+        });
+
+        xhr.onload = () => {
+          if (xhr.status === 200 || xhr.status === 201) {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response);
+          } else {
+            reject(new Error(`Upload failed: ${xhr.statusText}`));
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(new Error('Upload failed'));
+        };
+
+        xhr.open('POST', `${process.env.REACT_APP_API_BASE_URL}/files/licenses-tradelicenses-ifa/${encodeURIComponent(selectedZone)}/${encodeURIComponent(selectedBranch)}`);
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.send(formData);
+      });
+    } catch (error) {
+      throw error;
+    }
+  }, [selectedZone, selectedBranch, isImageFile]);
+
+  // Optimistic delete with auto-refresh
+  const openDeleteDialog = useCallback((filename) => {
+    setFileToDelete(filename);
+    setConfirmDeleteOpen(true);
+  }, []);
+
+  // Handle delete confirmation with optimistic update and auto-refresh
+  const handleDeleteConfirm = useCallback(async () => {
+    setConfirmDeleteOpen(false);
+    const trimmedFilename = fileToDelete.trim();
+
+    // Optimistic update
+    setFiles(prev => prev.filter(file => file.filename !== trimmedFilename));
 
     try {
-      const xhr = new XMLHttpRequest();
-      
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const progress = Math.round((event.loaded * 100) / event.total);
-          setUploadProgress(progress);
-        }
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required to delete files.');
+      }
+
+      const encodedFilename = encodeURIComponent(trimmedFilename);
+      const deleteUrl = `${process.env.REACT_APP_API_BASE_URL}/files/licenses-tradelicenses-ifa/${encodeURIComponent(selectedZone)}/${encodeURIComponent(selectedBranch)}/${encodedFilename}`;
+
+      const response = await fetch(deleteUrl, { 
+        method: 'DELETE', 
+        headers: { 'Authorization': `Bearer ${token}` } 
       });
 
-      xhr.onload = () => {
-        if (xhr.status === 200 || xhr.status === 201) {
-          fetchFiles(); // Re-fetch files after upload
-          setSnackbarMessage(`File "${normalizedFileName}" has been added successfully.`);
-          setSnackbarSeverity('success');
-          setSnackbarOpen(true);
-          setIsUploading(false);
-          setUploadProgress(0);
-        } else {
-          console.error('Upload failed:', xhr.statusText);
-          setSnackbarMessage('Failed to upload file.');
-          setSnackbarSeverity('error');
-          setSnackbarOpen(true);
-          setIsUploading(false);
-          setUploadProgress(0);
-        }
-      };
-
-      xhr.onerror = () => {
-        console.error('Upload error:', xhr.statusText);
-        setSnackbarMessage('Failed to upload file.');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-        setIsUploading(false);
-        setUploadProgress(0);
-      };
-
-      xhr.open('POST', `${process.env.REACT_APP_API_BASE_URL}/files/licenses-tradelicenses-ifa/${encodeURIComponent(selectedZone)}/${encodeURIComponent(selectedBranch)}`);
-      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-      xhr.send(formData);
-
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      setSnackbarMessage('Failed to upload file.');
-      setSnackbarSeverity('error');
-      setSnackbarOpen(true);
-      setIsUploading(false);
-      setUploadProgress(0);
-    }
-  };
-
-  // Open confirmation dialog before deletion
-  const openDeleteDialog = (filename) => {
-    setFileToDelete(filename);
-    setConfirmDeleteOpen(true); // Open the delete confirmation dialog
-  };
-
-  // Handle delete confirmation
-  const handleDeleteConfirm = async () => {
-    setConfirmDeleteOpen(false); // Close the confirmation dialog immediately
-  
-    const trimmedFilename = fileToDelete.trim();
-    const encodedFilename = encodeURIComponent(trimmedFilename);
-    const deleteUrl = `${process.env.REACT_APP_API_BASE_URL}/files/licenses-tradelicenses-ifa/${encodeURIComponent(selectedZone)}/${encodeURIComponent(selectedBranch)}/${encodedFilename}`;
-  
-    // Show snackbar right away with success message
-    setSnackbarMessage(`File "${trimmedFilename}" is being deleted, Please Click Refresh Icon`);
-    setSnackbarSeverity('info');
-    setSnackbarOpen(true);
-  
-    try {
-      console.log('DELETE URL:', deleteUrl);  // Debugging log
-  
-      const token = localStorage.getItem('token'); // Get token from localStorage
-      if (!token) {
-        console.error('Authentication token not found for file deletion.');
-        setSnackbarMessage('Authentication required to delete files.');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-        return; // Exit if no token
-      }
-
-      const response = await fetch(deleteUrl, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-  
       if (response.ok) {
-        setFiles((prevFiles) =>
-          prevFiles.filter((file) => file.filename !== trimmedFilename)
-        );
-  
-        // Update snackbar to success after delete
-        setSnackbarMessage(`File "${trimmedFilename}" has been deleted successfully.`);
+        setSnackbarMessage(`File "${trimmedFilename}" has been deleted successfully. Auto-refreshing table...`);
         setSnackbarSeverity('success');
+        // Clear cache for this zone/branch
+        clearCache(selectedZone, selectedBranch);
+        // Trigger auto-refresh after successful deletion
+        triggerAutoRefresh();
       } else {
-        const errorMessage = await response.text();
-        console.error('Failed to delete file:', response.statusText, errorMessage);
-  
-        // Update snackbar to error in case of failure
-        setSnackbarMessage('Failed to delete file.');
-        setSnackbarSeverity('error');
+        // Revert optimistic update on failure
+        fetchFiles(true);
+        throw new Error('Failed to delete file.');
       }
     } catch (error) {
       console.error('Error deleting file:', error);
       setSnackbarMessage('Error occurred while deleting the file.');
       setSnackbarSeverity('error');
+      // Revert optimistic update on error
+      fetchFiles(true);
     }
-  
-    setSnackbarOpen(true); // Ensure snackbar opens in all cases
-    setFileToDelete(null); // Clear the file to delete after the operation
-  };
+
+    setSnackbarOpen(true);
+    setFileToDelete(null);
+  }, [fileToDelete, selectedZone, selectedBranch, clearCache, fetchFiles, triggerAutoRefresh]);
 
   // Handle canceling the deletion
-  const handleDeleteCancel = () => {
-    setConfirmDeleteOpen(false); // Close the confirmation dialog
-    setFileToDelete(null); // Reset the file to delete
-  };
-
-  // Handle Dialog Close
-  // const handleDialogClose = () => {
-  //   setIsDialogOpen(false);
-  // };
+  const handleDeleteCancel = useCallback(() => {
+    setConfirmDeleteOpen(false);
+    setFileToDelete(null);
+  }, []);
 
   // Handle Snackbar Close
-  const handleSnackbarClose = (event, reason) => {
-    console.log('Snackbar closed with reason:', reason); // Debugging log
+  const handleSnackbarClose = useCallback((event, reason) => {
     if (reason === 'clickaway') return;
     setSnackbarOpen(false);
-  };
+  }, []);
 
   // Handle viewing a file
-  const handleViewFile = async (filename) => {
+  const handleViewFile = useCallback(async (filename) => {
     try {
-      const token = localStorage.getItem('token'); // Get token from localStorage
+      const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for viewing file.');
-        setSnackbarMessage('Authentication required to view files.');
+        setSnackbarMessage('Please log in to view files.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
-        return; // Exit if no token
+        return;
       }
       
       const encodedFilename = encodeURIComponent(filename.trim());
       const fileUrl = `${process.env.REACT_APP_API_BASE_URL}/files/download/${encodedFilename}`;
 
-      // Fetch the file with authentication header
       const response = await fetch(fileUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -395,11 +464,18 @@ const IslamabadFoodAuthority = ({ open, user }) => {
       });
 
       if (response.ok) {
-        // Get the blob and create a URL to open it
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        window.open(url, '_blank'); // Open the file in a new tab
-        window.URL.revokeObjectURL(url); // Clean up the URL after opening
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
       } else {
         const errorMessage = await response.text();
         console.error('Failed to view file:', response.statusText, errorMessage);
@@ -413,300 +489,341 @@ const IslamabadFoodAuthority = ({ open, user }) => {
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
-  };
+  }, []);
 
-  // Filter files based on search query (filename or fileNumber)
-  const filteredFiles = files.filter(file =>
-    file?.filename?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    file?.fileNumber?.toLowerCase().includes(searchQuery.toLowerCase())  // Added fileNumber to search filter
-  );
+  // Manual refresh function with better error handling
+  const handleManualRefresh = useCallback(async () => {
+    if (loading) {
+      console.log('Already loading, skipping refresh');
+      return;
+    }
+
+    if (!selectedZone || !selectedBranch) {
+      setSnackbarMessage('Please select a zone and branch first.');
+      setSnackbarSeverity('warning');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    console.log('Manual refresh triggered');
+    setSnackbarMessage('Refreshing files...');
+    setSnackbarSeverity('info');
+    setSnackbarOpen(true);
+
+    try {
+      await fetchFiles(true);
+      setSnackbarMessage('Files refreshed successfully!');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error('Manual refresh failed:', error);
+      setSnackbarMessage('Failed to refresh files. Please try again.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    }
+  }, [loading, selectedZone, selectedBranch, fetchFiles]);
+
+  // Effects
+  useEffect(() => {
+    fetchZones();
+  }, [fetchZones]);
+
+  useEffect(() => {
+    if (selectedZone) {
+      fetchBranches(selectedZone);
+    }
+  }, [selectedZone, fetchBranches]);
+
+  useEffect(() => {
+    if (selectedZone && selectedBranch) {
+      fetchFiles();
+    }
+  }, [selectedZone, selectedBranch, fetchFiles]);
 
   return (
     <MainContentWrapper open={open}>
-  {/* Heading Section */}
-  <Typography
-    variant="h4"
-    sx={{
-      color: headingColor,
-      mb: 4,
-      textAlign: 'center',
-      fontSize: '30px',
-      fontFamily: 'TanseekModernW20',
-      borderBottom: '2px solid #ccc',
-      paddingBottom: '10px',
-      transition: 'color 0.3s, border-bottom 0.3s',  // Transition for smooth theme switching
-    }}
-  >
-    LICENSES/TRADE LICENSES/ISLAMABAD FOOD AUTHORITY
-  </Typography>
-
-  <Typography
-    variant="subtitle1"
-    sx={{
-      textAlign: 'center',
-      color: theme.palette.mode === 'dark' ? '#f5f5f5' : '#333',
-      mb: 2,
-      transition: 'color 0.3s',  // Transition for smooth theme switching
-    }}
-  >
-    Your Branch: {user?.branch}
-  </Typography>
-
-  {/* Box to contain the search bar, Refresh button, Zone and Branch Select, and Add File button */}
-  <Box
-    sx={{
-      width: '100%',
-      backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#fff',
-      padding: '20px',
-      borderRadius: '8px',
-      transition: 'background-color 0.3s',  // Transition for smooth theme switching
-    }}
-  >
-    <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
-      {user?.role === 'Admin' && (
-        <>
-          {/* Zone Select */}
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth>
-              <Select
-                value={selectedZone}
-                onChange={(e) => setSelectedZone(e.target.value)}
-                displayEmpty
-              >
-                <MenuItem value="" disabled>
-                  Zone
-                </MenuItem>
-                {Array.isArray(zones) && zones.length > 0 && zones.map((zone) => (
-                  <MenuItem key={zone.zoneName} value={zone.zoneName}>
-                    {zone.zoneName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Branch Select */}
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth>
-              <Select
-                value={selectedBranch}
-                onChange={(e) => setSelectedBranch(e.target.value)}
-                displayEmpty
-                disabled={!selectedZone}
-              >
-                <MenuItem value="" disabled>
-                  Branch
-                </MenuItem>
-                {branches.map((branch) => (
-                  <MenuItem key={branch} value={branch}>
-                    {branch}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* Search Bar */}
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth>
-              <SearchBar
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                placeholder="Search files..."
-                style={{ width: '100%' }} // Full width on mobile
-              />
-            </FormControl>
-          </Grid>
-
-          {/* Button Section */}
-          <Grid
-            item
-            xs={12}
-            sm={3}
-            sx={{
-              padding: 0,
-              textAlign: 'right',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '15px',
-            }}
-          >
-            <AddFileButton onFileSelect={handleFileSelect} />
-            <IconButton onClick={fetchFiles} sx={{ color: '#f15a22' }}>
-              <RefreshIcon />
-            </IconButton>
-            <HoverPopoverButton />
-          </Grid>
-        </>
-      )}
-
-      {/* Non-Admin User View */}
-      {user?.role !== 'Admin' && (
-        <>
-          {/* Search Bar for non-admin */}
-          <Grid item xs={9}>
-            <FormControl fullWidth>
-              <SearchBar
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                placeholder="Search files..."
-                style={{ width: '100%' }}  // Full width on mobile
-              />
-            </FormControl>
-          </Grid>
-
-          {/* Refresh Button */}
-          <Grid
-            item
-            xs={3}
-            sx={{
-              padding: 0,
-              textAlign: 'right',
-              display: 'flex',
-              justifyContent: 'flex-end',
-              gap: '15px',
-            }}
-          >
-            <IconButton onClick={fetchFiles} sx={{ color: '#f15a22' }}>
-              <RefreshIcon />
-            </IconButton>
-          </Grid>
-        </>
-      )}
-    </Grid>
-
-    {/* File Table */}
-    <Box
-      sx={{
-        width: '100%',
-        maxHeight: '500px',  // Limit the max height for scrollability
-        overflowY: files.length > 5 ? 'scroll' : 'unset',  // Enable scrolling if there are more than 5 files
-        backgroundColor: theme.palette.mode === 'dark' ? '#222' : '#fafafa',
-        color: theme.palette.mode === 'dark' ? '#f5f5f5' : '#333',
-        padding: '20px',
-        borderRadius: '8px',
-        transition: 'background-color 0.3s, color 0.3s',  // Transition for smooth theme switching
-      }}
-    >
-      {loading ? (
-        <Typography>Loading...</Typography>
-      ) : files.length === 0 ? (
-        <Typography>No Files Stored</Typography>
-      ) : (
-        <FileTable files={filteredFiles} onDelete={openDeleteDialog} onView={handleViewFile} user={user} />
-      )}
-    </Box>
-  </Box>
-
-  {/* Confirmation Dialog for Deletion */}
-  <Dialog
-    open={confirmDeleteOpen}
-    onClose={handleDeleteCancel}
-    PaperProps={{
-      style: {
-        backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#fff',
-        color: theme.palette.mode === 'dark' ? '#f5f5f5' : '#333',
-        transition: 'background-color 0.3s, color 0.3s', // Transition for dialog theme switch
-      },
-    }}
-  >
-    <DialogTitle>Delete Confirmation</DialogTitle>
-    <DialogContent>
-      <DialogContentText>
-        Are you sure you want to delete the file "{fileToDelete}"?
-      </DialogContentText>
-    </DialogContent>
-    <DialogActions>
-      <Button
-        onClick={handleDeleteCancel}
+      {/* Heading Section */}
+      <Typography
+        variant="h4"
         sx={{
-          backgroundColor: '#d14e1d',
-          color: '#fff',
-          '&:hover': { backgroundColor: '#c43d17' },
+          color: headingColor,
+          mb: 4,
+          textAlign: 'center',
+          fontSize: '30px',
+          fontFamily: 'TanseekModernW20',
+          borderBottom: '2px solid #ccc',
+          paddingBottom: '10px',
+          transition: 'color 0.3s, border-bottom 0.3s',
         }}
       >
-        No
-      </Button>
-      <Button
-        onClick={handleDeleteConfirm}
+        LICENSES/TRADE LICENSES/ISLAMABAD FOOD AUTHORITY
+      </Typography>
+
+      <Typography
+        variant="subtitle1"
         sx={{
-          backgroundColor: '#f15a22',
-          color: '#fff',
-          '&:hover': { backgroundColor: '#d14e1d' },
+          textAlign: 'center',
+          color: theme.palette.mode === 'dark' ? '#f5f5f5' : '#333',
+          mb: 2,
+          transition: 'color 0.3s',
         }}
       >
-        Yes
-      </Button>
-    </DialogActions>
-  </Dialog>
+        Your Branch: {user?.branch}
+      </Typography>
 
-  {/* Snackbar for file operations */}
-  <Snackbar
-    open={snackbarOpen}
-    autoHideDuration={isUploading ? null : 6000}
-    onClose={handleSnackbarClose}
-    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-    sx={{
-      '& .MuiSnackbar-root': {
-        bottom: '24px !important',
-        right: '24px !important'
-      }
-    }}
-  >
-    <MuiAlert 
-      onClose={handleSnackbarClose} 
-      severity={snackbarSeverity} 
-      sx={{ 
-        width: '100%',
-        minWidth: '300px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        '& .MuiAlert-message': {
-          width: '100%'
-        }
-      }}
-    >
-      {snackbarMessage}
-      {isUploading && (
-        <Box sx={{ width: '100%', mt: 1 }}>
-          <LinearProgress 
-            variant="determinate" 
-            value={uploadProgress} 
-            sx={{
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              '& .MuiLinearProgress-bar': {
-                borderRadius: 3,
-                transition: 'transform 0.2s ease-in-out',
-                backgroundImage: 'linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent)',
-                backgroundSize: '1rem 1rem',
-                animation: 'progress-bar-stripes 1s linear infinite'
-              }
-            }}
-          />
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            mt: 0.5 
-          }}>
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Uploading...
-            </Typography>
-            <Typography variant="body2" sx={{ 
-              fontWeight: 500,
-              color: 'primary.main'
-            }}>
-              {uploadProgress}%
-            </Typography>
-          </Box>
+      {/* Box to contain the search bar, Refresh button, Zone and Branch Select, and Add File button */}
+      <Box
+        sx={{
+          width: '100%',
+          backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#fff',
+          padding: '20px',
+          borderRadius: '8px',
+          transition: 'background-color 0.3s',
+        }}
+      >
+        <Grid container spacing={2} sx={{ mb: 3 }} alignItems="center">
+          {user?.role === 'Admin' && (
+            <>
+              {/* Zone Select */}
+              <Grid item xs={12} sm={3}>
+                <FormControl fullWidth>
+                  <Select
+                    value={selectedZone}
+                    onChange={(e) => setSelectedZone(e.target.value)}
+                    displayEmpty
+                  >
+                    <MenuItem value="" disabled>
+                      Zone
+                    </MenuItem>
+                    {Array.isArray(zones) && zones.length > 0 && zones.map((zone) => (
+                      <MenuItem key={zone.zoneName} value={zone.zoneName}>
+                        {zone.zoneName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Branch Select */}
+              <Grid item xs={12} sm={3}>
+                <FormControl fullWidth>
+                  <Select
+                    value={selectedBranch}
+                    onChange={(e) => setSelectedBranch(e.target.value)}
+                    displayEmpty
+                    disabled={!selectedZone}
+                  >
+                    <MenuItem value="" disabled>
+                      Branch
+                    </MenuItem>
+                    {branches.map((branch) => (
+                      <MenuItem key={branch} value={branch}>
+                        {branch}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Search Bar */}
+              <Grid item xs={12} sm={3}>
+                <FormControl fullWidth>
+                  <SearchBar
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    placeholder="Search files..."
+                    style={{ width: '100%' }}
+                  />
+                </FormControl>
+              </Grid>
+
+              {/* Button Section */}
+              <Grid
+                item
+                xs={12}
+                sm={3}
+                sx={{
+                  padding: 0,
+                  textAlign: 'right',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '15px',
+                }}
+              >
+                <AddFileButton 
+                  onFileSelect={handleFileSelect} 
+                  multiple={true}
+                  disabled={isBatchProcessing}
+                />
+                <IconButton 
+                  onClick={handleManualRefresh} 
+                  sx={{ color: '#f15a22' }}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <CircularProgress size={20} sx={{ color: '#f15a22' }} />
+                  ) : (
+                    <RefreshIcon />
+                  )}
+                </IconButton>
+                <HoverPopoverButton />
+              </Grid>
+            </>
+          )}
+
+          {/* Non-Admin User View */}
+          {user?.role !== 'Admin' && (
+            <>
+              {/* Search Bar for non-admin */}
+              <Grid item xs={9}>
+                <FormControl fullWidth>
+                  <SearchBar
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    placeholder="Search files..."
+                    style={{ width: '100%' }}
+                  />
+                </FormControl>
+              </Grid>
+
+              {/* Refresh Button */}
+              <Grid
+                item
+                xs={3}
+                sx={{
+                  padding: 0,
+                  textAlign: 'right',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '15px',
+                }}
+              >
+                <IconButton 
+                  onClick={handleManualRefresh} 
+                  sx={{ color: '#f15a22' }}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <CircularProgress size={20} sx={{ color: '#f15a22' }} />
+                  ) : (
+                    <RefreshIcon />
+                  )}
+                </IconButton>
+              </Grid>
+            </>
+          )}
+        </Grid>
+
+        {/* File Table */}
+        <Box
+          sx={{
+            width: '100%',
+            maxHeight: '500px',
+            overflowY: files.length > 5 ? 'scroll' : 'unset',
+            backgroundColor: theme.palette.mode === 'dark' ? '#222' : '#fafafa',
+            color: theme.palette.mode === 'dark' ? '#f5f5f5' : '#333',
+            padding: '20px',
+            borderRadius: '8px',
+            transition: 'background-color 0.3s, color 0.3s',
+          }}
+        >
+          {loading ? (
+            <Typography>Loading...</Typography>
+          ) : files.length === 0 ? (
+            <Typography>No Files Stored</Typography>
+          ) : (
+            <FileTable 
+              files={filteredFiles} 
+              onDelete={openDeleteDialog} 
+              onView={handleViewFile} 
+              user={user}
+              filePathPrefix="LIC/TL/IFA"
+              showFileNumber={true}
+            />
+          )}
         </Box>
-      )}
-    </MuiAlert>
-  </Snackbar>
-</MainContentWrapper>
+      </Box>
 
+      {/* Confirmation Dialog for Deletion */}
+      <Dialog
+        open={confirmDeleteOpen}
+        onClose={handleDeleteCancel}
+        PaperProps={{
+          style: {
+            backgroundColor: theme.palette.mode === 'dark' ? '#333' : '#fff',
+            color: theme.palette.mode === 'dark' ? '#f5f5f5' : '#333',
+            transition: 'background-color 0.3s, color 0.3s',
+          },
+        }}
+      >
+        <DialogTitle>Delete Confirmation</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the file "{fileToDelete}"?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleDeleteCancel}
+            sx={{
+              backgroundColor: '#d14e1d',
+              color: '#fff',
+              '&:hover': { backgroundColor: '#c43d17' },
+            }}
+          >
+            No
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            sx={{
+              backgroundColor: '#f15a22',
+              color: '#fff',
+              '&:hover': { backgroundColor: '#d14e1d' },
+            }}
+          >
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for file operations */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={isBatchProcessing ? null : 6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        sx={{
+          '& .MuiSnackbar-root': {
+            bottom: '24px !important',
+            right: '24px !important'
+          }
+        }}
+      >
+        <MuiAlert 
+          onClose={handleSnackbarClose} 
+          severity={snackbarSeverity} 
+          sx={{ 
+            width: '100%',
+            minWidth: '300px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            '& .MuiAlert-message': {
+              width: '100%'
+            }
+          }}
+        >
+          {snackbarMessage}
+        </MuiAlert>
+      </Snackbar>
+
+      {/* Batch Progress Component */}
+      <BatchProgress
+        batchProgress={batchProgress}
+        isBatchProcessing={isBatchProcessing}
+        getOverallProgress={getOverallProgress}
+        getStatusSummary={getStatusSummary}
+      />
+    </MainContentWrapper>
   );
 };
 
-export default IslamabadFoodAuthority;
+export default React.memo(IslamabadFoodAuthority);

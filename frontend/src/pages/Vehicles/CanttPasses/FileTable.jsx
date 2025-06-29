@@ -11,9 +11,11 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import { useFileDownload } from '../../../hooks/useFileDownload';
 
 const FileTable = ({ files, onDelete, user  }) => {
   const theme = useTheme();
+  const { downloadFile, isAuthenticated } = useFileDownload();
   const buttonColor = '#f15a22';
 
   // Helper function to format the file path by replacing spaces with underscores
@@ -25,6 +27,10 @@ const FileTable = ({ files, onDelete, user  }) => {
   const getCleanFileName = (filename) => {
     const nameWithoutUnderscores = filename.replace(/_/g, ' '); // Replace underscores with spaces
     return nameWithoutUnderscores.replace(/\.[^/.]+$/, ''); // Remove the file extension for display
+  };
+
+  const handleDownload = (filename) => {
+    downloadFile(filename);
   };
 
   // Determine file path color based on theme mode
@@ -157,11 +163,8 @@ const FileTable = ({ files, onDelete, user  }) => {
               )}
               <IconButton
                 aria-label="view"
-                href={`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(
-                  file.filename
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={() => handleDownload(file.filename)}
+                disabled={!isAuthenticated}
                 sx={{
                   color: buttonColor,
                 }}

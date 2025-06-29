@@ -13,7 +13,8 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  useTheme
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import axios from 'axios';
 import ErrorBoundary from '../../components/ErrorBoundary';
@@ -30,6 +31,7 @@ const branchRoles = ['Restaurant Manager'];
 
 const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { error, handleError, clearError } = useErrorHandler();
   const [formValues, setFormValues] = useState({
     firstName: '',
@@ -172,24 +174,33 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
   return (
     <ErrorBoundary>
       <Drawer
-        anchor="right"
+        anchor={isMobile ? 'bottom' : 'right'}
         open={open}
         onClose={onClose}
         PaperProps={{
           sx: {
-            width: { xs: '100%', sm: '600px' },
+            width: isMobile ? '100%' : 600,
+            maxWidth: '100vw',
+            borderTopLeftRadius: isMobile ? 16 : 0,
+            borderTopRightRadius: isMobile ? 16 : 0,
+            borderBottomLeftRadius: isMobile ? 0 : 8,
+            borderBottomRightRadius: isMobile ? 0 : 8,
             backgroundColor: theme.palette.mode === 'dark' ? '#1a1a1a' : '#ffffff',
             color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
           },
         }}
       >
-        <Box sx={{ padding: 4 }}>
-          <Typography variant="h5" gutterBottom>
+        <Box sx={{ padding: isMobile ? 2 : 4, pt: isMobile ? 2 : 8, pb: isMobile ? 2 : 4 }}>
+          <Typography
+            variant={isMobile ? 'h6' : 'h5'}
+            gutterBottom
+            sx={{ fontWeight: 'bold', textAlign: 'center', fontSize: isMobile ? '1.1rem' : undefined, mt: isMobile ? 1.5 : 2 }}
+          >
             Edit User Details
           </Typography>
           <Divider sx={{ mb: 3 }} />
-          <Grid container spacing={3}>
-            <Grid item xs={6}>
+          <Grid container spacing={isMobile ? 2 : 3}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 label="First Name"
                 fullWidth
@@ -200,7 +211,7 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
                 InputLabelProps={{ shrink: true }} // Make label persistent
               />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField
                 label="Last Name"
                 fullWidth
@@ -234,7 +245,7 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
                 InputLabelProps={{ shrink: true }} // Make label persistent
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
                 <InputLabel shrink>Role</InputLabel>
                 <Select
@@ -277,7 +288,7 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
                 <InputLabel shrink>Zone</InputLabel>
                 <Select
@@ -319,7 +330,7 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
                 <InputLabel shrink>Branch</InputLabel>
                 <Select
@@ -362,12 +373,35 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
               </FormControl>
             </Grid>
           </Grid>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
-            <Button onClick={onClose} sx={{ mr: 2 }}>Cancel</Button>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: isMobile ? 'center' : 'flex-end',
+              alignItems: 'center',
+              gap: isMobile ? 2 : 0,
+              mt: 4,
+            }}
+          >
+            <Button
+              onClick={onClose}
+              sx={{ color: '#f15a22', fontWeight: 600, minWidth: 100, width: isMobile ? '100%' : 'auto', mb: isMobile ? 0 : undefined }}
+            >
+              Cancel
+            </Button>
             <Button
               variant="contained"
               onClick={handleSaveChanges}
-              sx={{ backgroundColor: '#f15a22', '&:hover': { backgroundColor: '#d3541e' } }}
+              sx={{
+                backgroundColor: '#f15a22',
+                '&:hover': { backgroundColor: '#d3541e' },
+                fontWeight: 600,
+                minWidth: 120,
+                width: isMobile ? '100%' : 'auto',
+                fontSize: isMobile ? '1rem' : '1.05rem',
+                boxShadow: 2,
+                mt: isMobile ? 0 : undefined,
+              }}
             >
               Save Changes
             </Button>

@@ -4,11 +4,20 @@ import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Typography from '@mui/material/Typography';
+import { useFileDownload } from '../../../hooks/useFileDownload';
 
 const FileItem = ({ file, onDelete }) => {
+  const { downloadFile, isAuthenticated } = useFileDownload();
+
   const handleDelete = () => {
     if (file && file.filename) {
       onDelete(file.filename);
+    }
+  };
+
+  const handleDownload = () => {
+    if (file && file.filename) {
+      downloadFile(file.filename);
     }
   };
 
@@ -39,9 +48,8 @@ const FileItem = ({ file, onDelete }) => {
       <Grid item xs={3} sx={{ textAlign: 'right' }}>
         <IconButton
           aria-label="view"
-          href={`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(file.filename)}`}
-          target="_blank"
-          rel="noopener noreferrer"
+          onClick={handleDownload}
+          disabled={!isAuthenticated}
           sx={{ color: '#f15a22' }}
         >
           <VisibilityIcon />
@@ -59,4 +67,4 @@ const FileItem = ({ file, onDelete }) => {
   );
 };
 
-export default FileItem; 
+export default FileItem;

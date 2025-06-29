@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogTitle, DialogActions, Button, Typography, styled } from '@mui/material';
+import { useAuth } from './contexts/AuthContext';
 
 // Styled components for custom styling
 const StyledDialog = styled(Dialog)({
@@ -20,8 +21,9 @@ const StyledButton = styled(Button)({
     },
 });
 
-const SessionTimeout = ({ timeout = 15 * 60 * 1000, onLogout }) => {
+const SessionTimeout = ({ timeout = 15 * 60 * 1000 }) => {
     const navigate = useNavigate();
+    const { logout } = useAuth();
     const [open, setOpen] = useState(false);
     let inactivityTimeout;
 
@@ -34,7 +36,7 @@ const SessionTimeout = ({ timeout = 15 * 60 * 1000, onLogout }) => {
 
     const handleClose = () => {
         setOpen(false);
-        onLogout();
+        logout();
         navigate("/login");
     };
 

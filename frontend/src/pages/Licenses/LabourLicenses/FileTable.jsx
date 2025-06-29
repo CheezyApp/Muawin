@@ -11,6 +11,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
 const FileTable = ({ files, onDelete, user  }) => {
   const theme = useTheme();
@@ -41,6 +42,30 @@ const FileTable = ({ files, onDelete, user  }) => {
 
   // Determine file path color based on theme mode
   const filePathColor = theme.palette.mode === 'dark' ? '#80b3ff' : 'blue'; // Lighter blue for dark mode, regular blue for light mode
+
+  // Authenticated file download
+  const handleDownload = async (filename) => {
+    const token = localStorage.getItem('token');
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(filename)}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('File download failed.');
+    }
+  };
 
   return (
     <TableContainer
@@ -169,11 +194,7 @@ const FileTable = ({ files, onDelete, user  }) => {
               )}
               <IconButton
                 aria-label="view"
-                href={`${process.env.REACT_APP_API_BASE_URL}/files/download/${encodeURIComponent(
-                  file.filename
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
+                onClick={() => handleDownload(file.filename)}
                 sx={{
                   color: buttonColor,
                 }}

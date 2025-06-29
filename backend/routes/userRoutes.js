@@ -23,4 +23,7 @@ router.delete('/:id', userController.deleteUser);
 // Reset user password
 router.put('/:id/resetPassword', userController.resetPassword);
 
+// Bulk upload users from Excel
+router.post('/upload', userController.upload.single('file'), userController.uploadUsersFromExcel);
+
 module.exports = router; 

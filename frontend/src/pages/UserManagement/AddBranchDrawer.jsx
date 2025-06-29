@@ -21,9 +21,11 @@ import {
 import LockIcon from '@mui/icons-material/Lock'; // Import Lock Icon
 import { useTheme } from '@mui/material/styles'; // Import to use theme settings
 import axios from 'axios';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 const AddBranchDrawer = ({ open, onClose }) => {
   const theme = useTheme(); // Access current theme (light/dark)
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [zones, setZones] = useState([]);
   const [selectedZone, setSelectedZone] = useState('');
@@ -107,14 +109,32 @@ const AddBranchDrawer = ({ open, onClose }) => {
 
   return (
     <>
-      <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: '30%' } }}>
-        <Box sx={{ padding: 4 }}>
-          <Typography variant="h5" gutterBottom sx={{ color: '#f15a22', fontWeight: 'bold', mt: 8, mb:1 }}>
+      <Drawer
+        anchor={isMobile ? 'bottom' : 'right'}
+        open={open}
+        onClose={onClose}
+        PaperProps={{
+          sx: {
+            width: isMobile ? '100%' : '30%',
+            maxWidth: '100vw',
+            borderTopLeftRadius: isMobile ? 16 : 0,
+            borderTopRightRadius: isMobile ? 16 : 0,
+            borderBottomLeftRadius: isMobile ? 0 : 8,
+            borderBottomRightRadius: isMobile ? 0 : 8,
+          },
+        }}
+      >
+        <Box sx={{ padding: isMobile ? 2 : 4, pt: isMobile ? 2 : 8, pb: isMobile ? 2 : 4 }}>
+          <Typography
+            variant={isMobile ? 'h6' : 'h5'}
+            gutterBottom
+            sx={{ color: '#f15a22', fontWeight: 'bold', mt: isMobile ? 1 : 8, mb: 1, textAlign: 'center', fontSize: isMobile ? '1.1rem' : undefined }}
+          >
             Add a Branch
           </Typography>
           <Divider sx={{ mb: 3, borderColor: '#f15a22' }} />
 
-          <Grid container spacing={3}>
+          <Grid container spacing={isMobile ? 2 : 3}>
             <Grid item xs={12}>
               <FormControl fullWidth>
                 <InputLabel
@@ -142,13 +162,14 @@ const AddBranchDrawer = ({ open, onClose }) => {
                     '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                       borderColor: '#f15a22', // Fix border color when focused
                     },
+                    fontSize: isMobile ? '0.98rem' : undefined,
                   }}
                 >
                   <MenuItem value="" disabled>
                     Select Zone
                   </MenuItem>
                   {zones.map((zone) => (
-                    <MenuItem key={zone._id} value={zone.zoneName}>
+                    <MenuItem key={zone._id} value={zone.zoneName} sx={{ fontSize: isMobile ? '0.98rem' : undefined }}>
                       {zone.zoneName}
                     </MenuItem>
                   ))}
@@ -187,6 +208,7 @@ const AddBranchDrawer = ({ open, onClose }) => {
                     '&:hover fieldset': { borderColor: '#f15a22' },
                     '&.Mui-focused fieldset': { borderColor: '#f15a22' },
                   },
+                  fontSize: isMobile ? '0.98rem' : undefined,
                 }}
               />
             </Grid>
@@ -211,19 +233,41 @@ const AddBranchDrawer = ({ open, onClose }) => {
                     '&:hover fieldset': { borderColor: '#f15a22' },
                     '&.Mui-focused fieldset': { borderColor: '#f15a22' },
                   },
+                  fontSize: isMobile ? '0.98rem' : undefined,
                 }}
               />
             </Grid>
           </Grid>
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-            <Button onClick={onClose} sx={{ color: '#f15a22' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: isMobile ? 'center' : 'space-between',
+              alignItems: 'center',
+              gap: isMobile ? 2 : 0,
+              mt: 4,
+            }}
+          >
+            <Button
+              onClick={onClose}
+              sx={{ color: '#f15a22', fontWeight: 600, minWidth: 100, width: isMobile ? '100%' : 'auto' }}
+            >
               Cancel
             </Button>
             <Button
               variant="contained"
               onClick={handleAddBranch}
-              sx={{ backgroundColor: '#f15a22', '&:hover': { backgroundColor: '#d3541e' } }}
+              sx={{
+                backgroundColor: '#f15a22',
+                '&:hover': { backgroundColor: '#d3541e' },
+                fontWeight: 600,
+                minWidth: 120,
+                width: isMobile ? '100%' : 'auto',
+                fontSize: isMobile ? '1rem' : '1.05rem',
+                boxShadow: 2,
+                mt: isMobile ? 0 : undefined,
+              }}
             >
               Add Branch
             </Button>
@@ -243,14 +287,34 @@ const AddBranchDrawer = ({ open, onClose }) => {
             You are adding <strong>{`${brandName} ${branchName}`}</strong> in <strong>{selectedZone}</strong>. Are you sure?
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelAddBranch} sx={{ color: '#f15a22' }}>
+        <DialogActions
+          sx={{
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: isMobile ? 2 : 0,
+            alignItems: isMobile ? 'stretch' : 'center',
+            justifyContent: isMobile ? 'center' : 'flex-end',
+            px: isMobile ? 2 : 3,
+            pb: isMobile ? 2 : 3,
+          }}
+        >
+          <Button
+            onClick={handleCancelAddBranch}
+            sx={{ color: '#f15a22', fontWeight: 600, minWidth: 100, width: isMobile ? '100%' : 'auto' }}
+          >
             Cancel
           </Button>
           <Button
             variant="contained"
             onClick={handleConfirmAddBranch}
-            sx={{ backgroundColor: '#f15a22', '&:hover': { backgroundColor: '#d3541e' } }}
+            sx={{
+              backgroundColor: '#f15a22',
+              '&:hover': { backgroundColor: '#d3541e' },
+              fontWeight: 600,
+              minWidth: 120,
+              width: isMobile ? '100%' : 'auto',
+              fontSize: isMobile ? '1rem' : '1.05rem',
+              boxShadow: 2,
+            }}
           >
             Confirm
           </Button>
