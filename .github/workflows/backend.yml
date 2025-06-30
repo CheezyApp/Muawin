@@ -21,9 +21,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~
-            rm -rf muawin
-            git clone https://github.com/CheezyApp/Muawin.git muawin
-            cd muawin/backend
+            rm -rf Muawin
+            git clone https://github.com/SardarNoor/Muawin.git
+            cd Muawin/backend
 
             npm install
 
