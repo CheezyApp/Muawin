@@ -24,6 +24,11 @@ jobs:
         working-directory: ./frontend
         run: npm install
 
+      - name: Inject environment variables
+        run: |
+          echo "REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL" >> .env
+
+
       - name: Build Frontend
         working-directory: ./frontend
         run:  CI=false npm run build
