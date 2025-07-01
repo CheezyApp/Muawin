@@ -20,11 +20,20 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
+            # Go to home and clone fresh code
             cd ~
             rm -rf Muawin
             git clone https://github.com/SardarNoor/Muawin.git
             cd Muawin/backend
 
+            # Create .env file from GitHub Secrets
+            echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
+            echo "PORT=5001" >> .env
+            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+            echo "NODE_ENV=development" >> .env
+
+            # Install dependencies
             npm install
 
+            # Restart PM2 or start if not running
             pm2 restart server.js || pm2 start server.js
