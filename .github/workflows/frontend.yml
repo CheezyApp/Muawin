@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'frontend/**'
+      - '.github/workflows/frontend.yml'
 
 jobs:
   deploy-frontend:
@@ -25,13 +26,13 @@ jobs:
         run: npm install
 
       - name: Inject environment variables
+        working-directory: ./frontend
         run: |
-          echo "REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL" >> .env
-
+          echo "REACT_APP_API_BASE_URL=${{ secrets.REACT_APP_API_BASE_URL }}" >> .env
 
       - name: Build Frontend
         working-directory: ./frontend
-        run:  CI=false npm run build
+        run: CI=false npm run build
 
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@master
@@ -52,4 +53,3 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
