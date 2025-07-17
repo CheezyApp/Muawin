@@ -25,6 +25,7 @@ const designationRoutes = require("./routes/designationRoutes")
 // Initialize express app
 const app = express()
 
+
 // Connect to MongoDB
 connectDB()
 
@@ -91,8 +92,10 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(config.port, () => {
+
   // console.log(`Server is running on port ${config.port} in ${config.nodeEnv} mode`)
 
 })
 
 module.exports = app
+
