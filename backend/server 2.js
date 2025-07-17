@@ -1,5 +1,8 @@
 require('dotenv').config();
-console.log(process.env.MONGO_URI); 
+
+// console.log(process.env.MONGO_URI);
+
+
 const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
@@ -21,9 +24,11 @@ app.use(express.json());
 // MongoDB URI
 mongoose.connect(process.env.MONGO_URI, {
 }).then(() => {
-  console.log('MongoDB connected successfully');
+  // console.log('MongoDB connected successfully');
+
 }).catch((err) => {
-  console.error('Error connecting to MongoDB:', err);
+  // console.error('Error connecting to MongoDB:', err);
+
 });
 //mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/mauwinapp');
 
@@ -36,9 +41,13 @@ let gridfsBucket;
 
 // Handle MongoDB connection
 db.once('open', async () => {
-  console.log('MongoDB connected');
+  // console.log('MongoDB connected');
+
+
   gridfsBucket = new GridFSBucket(db.db, { bucketName: 'uploads' });
-  console.log('GridFS initialized');
+
+  // console.log('GridFS initialized');
+
 
   await initializeZones();
 });
@@ -46,13 +55,18 @@ db.once('open', async () => {
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log('Server started');
+  // console.log(`Server is running on port ${PORT}`);
+
+
+  // console.log('Server started');
+
 });
 
 // Add a simple test route to check if routing is working
 app.get('/test', (req, res) => {
-  console.log('Test route hit!');
+  // console.log('Test route hit!');
+
+
   res.status(200).json({ message: 'Test successful!' });
 });
 
@@ -88,14 +102,18 @@ const initializeZones = async () => {
         zoneName,
         branches: initialZones[zoneName],
       }));
-      
+
       await Zone.insertMany(zonesToInsert);
-      console.log('Initial zones and branches added to MongoDB');
+
+      // console.log('Initial zones and branches added to MongoDB');
+
     } else {
-      console.log('Zones already exist in MongoDB');
+      // console.log('Zones already exist in MongoDB');
+
     }
   } catch (error) {
-    console.error('Error initializing zones:', error);
+    // console.error('Error initializing zones:', error);
+
   }
 };
 
@@ -105,7 +123,9 @@ app.get('/api/zones', async (req, res) => {
     const zones = await Zone.find(); // Fetch all zones
     res.status(200).json(zones);
   } catch (error) {
-    console.error('Error fetching zones:', error);
+    // console.error('Error fetching zones:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -119,8 +139,10 @@ app.get('/api/zones/:zoneName/branches', async (req, res) => {
       }
       res.status(200).json(zone.branches);
   } catch (error) {
-      console.error('Error fetching branches:', error); // Log the error
-      res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    // console.error('Error fetching branches:', error);
+
+
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 });
 
@@ -142,7 +164,9 @@ app.post('/api/zones/:zoneName/addBranch', async (req, res) => {
 
     res.status(200).json({ message: `Branch ${branchName} added to zone ${zoneName}`, zone });
   } catch (error) {
-    console.error('Error adding branch:', error);
+    // console.error('Error adding branch:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -155,7 +179,9 @@ app.put('/api/zones/:zoneId/editBranch', async (req, res) => {
     const { oldBranchName, newBranchName } = req.body;
 
     const zone = await Zone.findById(zoneId);
-    console.log("Fetched Zone:", zone); // Log the zone object to inspect its structure
+
+    // console.log("Fetched Zone:", zone);
+
 
     if (!zone) {
       return res.status(404).json({ message: 'Zone not found' });
@@ -163,7 +189,9 @@ app.put('/api/zones/:zoneId/editBranch', async (req, res) => {
 
     // Find the branch index and update the branch name
     const branchIndex = zone.branches.indexOf(oldBranchName);
-    console.log("Branch Index:", branchIndex); // Log the branch index to see if it's found
+
+    // console.log("Branch Index:", branchIndex);
+
 
     if (branchIndex === -1) {
       return res.status(404).json({ message: 'Branch not found' });
@@ -181,7 +209,9 @@ app.put('/api/zones/:zoneId/editBranch', async (req, res) => {
 
     res.status(200).json({ message: `Branch ${oldBranchName} updated successfully`, zone });
   } catch (error) {
-    console.error('Error updating branch:', error);
+    // console.error('Error updating branch:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -212,7 +242,9 @@ app.delete('/api/zones/:zoneId/deleteBranch', async (req, res) => {
 
     res.status(200).json({ message: `Branch ${branchName} removed successfully`, zone });
   } catch (error) {
-    console.error('Error deleting branch:', error);
+    // console.error('Error deleting branch:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -282,7 +314,9 @@ app.post('/api/users', async (req, res) => {
 
     res.status(201).json({ message: 'User created successfully', user: newUser });
   } catch (error) {
-    console.error('Error creating user:', error.stack);
+    // console.error('Error creating user:', error.stack);
+
+
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 });
@@ -303,7 +337,9 @@ app.post('/api/auth/signin', async (req, res) => {
 
     // Ensure both data and hash are present for bcrypt.compare()
     if (!user.password) {
-      console.error('Password not found for user:', email);
+      // console.error('Password not found for user:', email);
+
+
       return res.status(500).json({ message: 'Server error: Missing password data' });
     }
 
@@ -324,7 +360,9 @@ app.post('/api/auth/signin', async (req, res) => {
       registeredModules: user.registeredModules,
     });
   } catch (error) {
-    console.error('Error during sign-in:', error.message, error.stack);
+    // console.error('Error during sign-in:', error.message, error.stack);
+
+
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -335,7 +373,9 @@ app.get('/api/users', async (req, res) => {
     const users = await User.find(); // Fetch all users
     res.status(200).json(users); // Include plainPassword in the response
   } catch (error) {
-    console.error('Error fetching users:', error);
+    // console.error('Error fetching users:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -354,7 +394,9 @@ app.put('/api/users/:id', async (req, res) => {
     }
     res.status(200).json(updatedUser);
   } catch (error) {
-    console.error('Error updating user:', error);
+    // console.error('Error updating user:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -364,23 +406,28 @@ app.put('/api/users/:id', async (req, res) => {
   const { id: userId } = req.params;
   const { name, displayName, role, branch, zone } = req.body;
 
-  console.log("Received updateDetails request:", req.body); // Log the entire request payload
+  // console.log("Received updateDetails request:", req.body);
+
 
   // Validate userId as a valid ObjectId
   if (!mongoose.Types.ObjectId.isValid(userId)) {
-    console.error("Invalid User ID:", userId);
+    // console.error("Invalid User ID:", userId);
+
+
     return res.status(400).json({ message: 'Invalid User ID' });
   }
 
   // Check for missing fields and log each field for debugging
   if (!name || !displayName || !role || !branch || !zone) {
-    console.error("Missing required fields in request body:", {
-      name,
-      displayName,
-      role,
-      branch,
-      zone
-    });
+    // console.error("Missing required fields in request body:", {
+          name,
+          displayName,
+          role,
+          branch,
+          zone
+        });
+
+
     return res.status(400).json({ message: 'All fields are required' });
   }
 
@@ -392,20 +439,28 @@ app.put('/api/users/:id', async (req, res) => {
     );
 
     if (!updatedUser) {
-      console.error("User not found for ID:", userId);
+      // console.error("User not found for ID:", userId);
+
+
       return res.status(404).json({ message: 'User not found' });
     }
 
     res.status(200).json({ message: 'User details updated successfully', updatedUser });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      console.error('Validation Error during user update:', error.errors);
+      // console.error('Validation Error during user update:', error.errors);
+
+
       return res.status(400).json({ message: 'Validation error', errors: error.errors });
     } else if (error.name === 'CastError') {
-      console.error('Cast Error during user update:', error);
+      // console.error('Cast Error during user update:', error);
+
+
       return res.status(400).json({ message: 'Invalid data type for one or more fields', error: error.message });
     } else {
-      console.error('Error during user update:', error.stack || error);
+      // console.error('Error during user update:', error.stack || error);
+
+
       return res.status(500).json({ message: 'Server error', error: error.message });
     }
   }
@@ -413,14 +468,17 @@ app.put('/api/users/:id', async (req, res) => {
 
 // Update user's modules
 app.put('/api/users/:id/modules', async (req, res) => {
-  console.log(`Request received to update modules for user: ${req.params.id}`);
-  
+  // console.log(`Request received to update modules for user: ${req.params.id}`);
+
+
   try {
     const { modules } = req.body;
     const userId = req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      console.log('Invalid User ID:', userId);
+      // console.log('Invalid User ID:', userId);
+
+
       return res.status(400).send({ message: 'Invalid User ID' });
     }
 
@@ -431,13 +489,17 @@ app.put('/api/users/:id/modules', async (req, res) => {
     );
 
     if (!updatedUser) {
-      console.log('User not found:', userId);
+      // console.log('User not found:', userId);
+
+
       return res.status(404).send({ message: 'User not found' });
     }
 
     res.status(200).send({ message: 'Modules updated successfully', updatedUser });
   } catch (error) {
-    console.error('Error updating modules:', error);
+    // console.error('Error updating modules:', error);
+
+
     res.status(500).send({ message: 'Internal server error' });
   }
 });
@@ -446,12 +508,14 @@ app.delete('/api/users/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Log the ID received
-    console.log(`Received request to delete user with ID: ${id}`);
+    // console.log(`Received request to delete user with ID: ${id}`);
+
 
     // Ensure the ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.log('Invalid user ID');
+      // console.log('Invalid user ID');
+
+
       return res.status(400).json({ message: 'Invalid user ID', status: 'error' });
     }
 
@@ -459,14 +523,20 @@ app.delete('/api/users/:id', async (req, res) => {
     const deletedUser = await User.findByIdAndDelete(id);
 
     if (!deletedUser) {
-      console.log('User not found');
+      // console.log('User not found');
+
+
       return res.status(404).json({ message: 'User not found', status: 'error' });
     }
 
-    console.log('User deleted successfully');
+    // console.log('User deleted successfully');
+
+
     return res.status(200).json({ message: 'User deleted successfully', status: 'success' });
   } catch (error) {
-    console.error('Error deleting user:', error);
+    // console.error('Error deleting user:', error);
+
+
     return res.status(500).json({ message: 'Internal server error', status: 'error' });
   }
 });
@@ -495,7 +565,9 @@ app.put('/api/users/:id/resetPassword', async (req, res) => {
 
     res.status(200).json({ message: 'Password reset successfully', user: updatedUser });
   } catch (error) {
-    console.error('Error resetting password:', error);
+    // console.error('Error resetting password:', error);
+
+
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -534,7 +606,9 @@ app.post('/api/users/multiple', async (req, res) => {
     await User.insertMany(usersToInsert);
     res.status(201).json({ message: 'Users added successfully' });
   } catch (error) {
-    console.error('Error adding users:', error);
+    // console.error('Error adding users:', error);
+
+
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -599,7 +673,9 @@ app.get('/api/files/:category/:zone/:branch', async (req, res) => {
 
     res.json(files);
   } catch (error) {
-    console.error('Error fetching files:', error);
+    // console.error('Error fetching files:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -610,7 +686,8 @@ app.post('/api/files/:category/:zone/:branch', upload.single('file'), async (req
     const { category, zone, branch } = req.params;
     const originalFilename = req.file.originalname.trim();
 
-    console.log('Original Filename:', originalFilename);
+    // console.log('Original Filename:', originalFilename);
+
 
     // Create readable stream from the uploaded file buffer directly
     const readableStream = new Readable({
@@ -636,7 +713,8 @@ app.post('/api/files/:category/:zone/:branch', upload.single('file'), async (req
         .on('finish', resolve);
     });
 
-    console.log(`File uploaded to GridFS: ${originalFilename}, ID: ${uploadStream.id}`);
+    // console.log(`File uploaded to GridFS: ${originalFilename}, ID: ${uploadStream.id}`);
+
 
     // Metadata save without blocking response
     const file = new File({
@@ -653,9 +731,10 @@ app.post('/api/files/:category/:zone/:branch', upload.single('file'), async (req
     file.save().catch(error => console.error('Error saving file metadata:', error));
 
     res.status(201).json({ message: 'File uploaded successfully', fileId: uploadStream.id });
-
   } catch (error) {
-    console.error('Error during file upload:', error);
+    // console.error('Error during file upload:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -667,7 +746,9 @@ app.get('/api/files/download/:filename', async (req, res) => {
     const file = await File.findOne({ filename: decodedFilename });
 
     if (!file) {
-      console.error(`File not found: ${decodedFilename}`);
+      // console.error(`File not found: ${decodedFilename}`);
+
+
       return res.status(404).json({ message: 'File not found' });
     }
 
@@ -679,11 +760,15 @@ app.get('/api/files/download/:filename', async (req, res) => {
 
     downloadStream.pipe(res)
       .on('error', (err) => {
-        console.error('Error streaming file:', err);
-        res.status(500).json({ message: 'Error retrieving file' });
-      });
+      // console.error('Error streaming file:', err);
+
+
+      res.status(500).json({ message: 'Error retrieving file' });
+    });
   } catch (error) {
-    console.error('Error fetching file:', error);
+    // console.error('Error fetching file:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -694,39 +779,52 @@ app.delete('/api/files/:category/:zone/:branch/:filename', async (req, res) => {
     const { category, zone, branch, filename } = req.params;
     const trimmedFilename = decodeURIComponent(filename.trim());
 
-    console.log('DELETE Request Params:', { category, zone, branch, filename: trimmedFilename });
+    // console.log('DELETE Request Params:', { category, zone, branch, filename: trimmedFilename });
+
 
     // Find the file metadata in MongoDB (`files` collection)
     const fileDoc = await File.findOne({ filename: trimmedFilename, category, zone, branch });
 
     if (!fileDoc) {
-      console.error('File not found in metadata:', trimmedFilename);
+      // console.error('File not found in metadata:', trimmedFilename);
+
+
       return res.status(404).json({ message: 'File not found' });
     }
 
-    console.log('File found in metadata:', fileDoc);
+    // console.log('File found in metadata:', fileDoc);
+
 
     // Remove the file metadata from MongoDB (`files` collection) first
     const metadataDeleteResult = await File.deleteOne({ _id: fileDoc._id });
     if (metadataDeleteResult.deletedCount === 0) {
-      console.error('Failed to delete file metadata:', fileDoc._id);
+      // console.error('Failed to delete file metadata:', fileDoc._id);
+
+
       return res.status(500).json({ message: 'Failed to delete file metadata' });
     }
 
-    console.log('File metadata deleted from MongoDB (`files` collection):', fileDoc._id);
+    // console.log('File metadata deleted from MongoDB (`files` collection):', fileDoc._id);
+
 
     // Now delete the file from GridFS (`uploads.files` and `uploads.chunks`)
     gridfsBucket.delete(fileDoc.fileId, (err) => {
       if (err) {
-        console.error('Error deleting from GridFS:', err);
+        // console.error('Error deleting from GridFS:', err);
+
+
         return res.status(500).json({ message: 'Failed to delete from GridFS' });
       }
 
-      console.log('File deleted from GridFS:', fileDoc.fileId);
+      // console.log('File deleted from GridFS:', fileDoc.fileId);
+
+
       res.json({ message: 'File deleted successfully' });
     });
   } catch (error) {
-    console.error('Error during file deletion:', error);
+    // console.error('Error during file deletion:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -765,7 +863,9 @@ app.post('/api/tickets', async (req, res) => {
     await newTicket.save(); // Save the ticket in MongoDB
     res.status(201).json({ message: 'Ticket created successfully', ticket: newTicket });
   } catch (error) {
-    console.error('Error creating ticket:', error);
+    // console.error('Error creating ticket:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -776,7 +876,9 @@ app.get('/api/tickets', async (req, res) => {
     const tickets = await Ticket.find(); // Retrieve all tickets
     res.status(200).json(tickets);
   } catch (error) {
-    console.error('Error fetching tickets:', error);
+    // console.error('Error fetching tickets:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -792,7 +894,9 @@ app.get('/api/tickets/:ticketId', async (req, res) => {
 
     res.status(200).json(ticket);
   } catch (error) {
-    console.error('Error fetching ticket:', error);
+    // console.error('Error fetching ticket:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -814,7 +918,9 @@ app.put('/api/tickets/:ticketId/status', async (req, res) => {
 
     res.status(200).json({ message: 'Ticket status updated', ticket });
   } catch (error) {
-    console.error('Error updating ticket status:', error);
+    // console.error('Error updating ticket status:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -830,7 +936,9 @@ app.delete('/api/tickets/:ticketId', async (req, res) => {
 
     res.status(200).json({ message: 'Ticket deleted successfully' });
   } catch (error) {
-    console.error('Error deleting ticket:', error);
+    // console.error('Error deleting ticket:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -869,7 +977,9 @@ app.post('/api/tasks', async (req, res) => {
     await newTask.save();
     res.status(201).json({ message: 'Task added successfully', task: newTask });
   } catch (error) {
-    console.error('Error adding task:', error);
+    // console.error('Error adding task:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -890,7 +1000,9 @@ app.get('/api/tasks', async (req, res) => {
     const tasks = await Task.find(filter);
     res.status(200).json(tasks);
   } catch (error) {
-    console.error('Error fetching tasks:', error);
+    // console.error('Error fetching tasks:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -906,7 +1018,9 @@ app.get('/api/tasks/:id', async (req, res) => {
 
     res.status(200).json(task);
   } catch (error) {
-    console.error('Error fetching task:', error);
+    // console.error('Error fetching task:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -928,7 +1042,9 @@ app.put('/api/tasks/:id', async (req, res) => {
 
     res.status(200).json({ message: 'Task updated successfully', task: updatedTask });
   } catch (error) {
-    console.error('Error updating task:', error);
+    // console.error('Error updating task:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -944,7 +1060,9 @@ app.delete('/api/tasks/:id', async (req, res) => {
 
     res.status(200).json({ message: 'Task deleted successfully' });
   } catch (error) {
-    console.error('Error deleting task:', error);
+    // console.error('Error deleting task:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -976,7 +1094,9 @@ app.post('/api/announcements', async (req, res) => {
 
     res.status(201).json({ message: 'Announcement created successfully', announcement: newAnnouncement });
   } catch (error) {
-    console.error('Error creating announcement:', error);
+    // console.error('Error creating announcement:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -987,7 +1107,9 @@ app.get('/api/announcements', async (req, res) => {
     const announcements = await Announcement.find(); // Fetch all announcements
     res.status(200).json(announcements);
   } catch (error) {
-    console.error('Error fetching announcements:', error);
+    // console.error('Error fetching announcements:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -997,7 +1119,9 @@ app.get('/api/announcements/latest', async (req, res) => {
     const latestAnnouncement = await Announcement.findOne().sort({ createdAt: -1 });
     res.status(200).json(latestAnnouncement);
   } catch (error) {
-    console.error('Error fetching the latest announcement:', error);
+    // console.error('Error fetching the latest announcement:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -1057,7 +1181,9 @@ app.patch('/api/assignedTasks/:taskId/complete', async (req, res) => {
 
     res.status(200).json({ message: 'Assigned task marked as completed' });
   } catch (error) {
-    console.error('Error marking assigned task as completed:', error);
+    // console.error('Error marking assigned task as completed:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -1084,7 +1210,9 @@ app.get('/api/user/assignedTasks', async (req, res) => {
     const assignedTasks = await AssignedTask.find(filter);
     res.status(200).json(assignedTasks);
   } catch (error) {
-    console.error('Error fetching user assigned tasks:', error);
+    // console.error('Error fetching user assigned tasks:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -1109,7 +1237,9 @@ app.post('/api/assignedTasks', async (req, res) => {
     await newAssignedTask.save();
     res.status(201).json({ message: 'Assigned task added successfully', task: newAssignedTask });
   } catch (error) {
-    console.error('Error adding assigned task:', error);
+    // console.error('Error adding assigned task:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -1144,10 +1274,15 @@ const CylinderExpiry = mongoose.model('CylinderExpiry', CylinderExpirySchema);
 
 // API to get all locations
 app.get('/api/locations', async (req, res) => {
-  console.log('Attempting to fetch locations...');
+  // console.log('Attempting to fetch locations...');
+
+
   try {
     const locations = await Location.find();
-    console.log('Fetched locations:', locations);
+
+    // console.log('Fetched locations:', locations);
+
+
     res.json(locations);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching locations', error: error.message });
@@ -1156,10 +1291,15 @@ app.get('/api/locations', async (req, res) => {
 
 // API to get all categories
 app.get('/api/categories', async (req, res) => {
-  console.log('Attempting to fetch categories...');
+  // console.log('Attempting to fetch categories...');
+
+
   try {
     const categories = await Category.find();
-    console.log('Fetched categories:', categories);
+
+    // console.log('Fetched categories:', categories);
+
+
     res.json(categories);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching categories', error: error.message });
@@ -1186,7 +1326,9 @@ app.post('/api/cylinder-expiry', async (req, res) => {
     await cylinderExpiryData.save();
     res.status(201).json(cylinderExpiryData);
   } catch (error) {
-    console.error('Error saving cylinder expiry data:', error);
+    // console.error('Error saving cylinder expiry data:', error);
+
+
     res.status(500).json({ error: 'Failed to save data' });
   }
 });
@@ -1205,7 +1347,9 @@ app.get('/api/cylinder-expiry/:zone/:branch', async (req, res) => {
     // Return the found cylinders as JSON
     res.json(cylinders);
   } catch (error) {
-    console.error('Error fetching cylinders:', error);
+    // console.error('Error fetching cylinders:', error);
+
+
     res.status(500).json({ error: 'Server error fetching cylinders.' });
   }
 });
@@ -1213,17 +1357,24 @@ app.get('/api/cylinder-expiry/:zone/:branch', async (req, res) => {
 // DELETE route to remove a cylinder record by ID
 app.delete('/api/cylinder-expiry/:id', async (req, res) => {
   const { id } = req.params;
-  console.log("Attempting to delete ID:", id); // Debugging
+
+  // console.log("Attempting to delete ID:", id);
+
 
   try {
     const deletedRecord = await CylinderExpiry.findByIdAndDelete(id);
-    console.log("Deleted record:", deletedRecord); // Debugging
+
+    // console.log("Deleted record:", deletedRecord);
+
+
     if (!deletedRecord) {
       return res.status(404).json({ message: 'No cylinder record found with that ID.' });
     }
     res.status(200).json({ message: 'Cylinder record deleted successfully.' });
   } catch (error) {
-    console.error('Error deleting cylinder record:', error);
+    // console.error('Error deleting cylinder record:', error);
+
+
     res.status(500).json({ error: 'Failed to delete cylinder record.' });
   }
 });
@@ -1241,7 +1392,9 @@ app.post('/api/locations', async (req, res) => {
     await newLocation.save();
     res.status(201).json(newLocation);
   } catch (error) {
-    console.error('Error adding location:', error);
+    // console.error('Error adding location:', error);
+
+
     res.status(500).json({ error: 'Failed to add location.' });
   }
 });
@@ -1258,7 +1411,9 @@ app.post('/api/categories', async (req, res) => {
     await newCategory.save();
     res.status(201).json(newCategory);
   } catch (error) {
-    console.error('Error adding category:', error);
+    // console.error('Error adding category:', error);
+
+
     res.status(500).json({ error: 'Failed to add category.' });
   }
 });
@@ -1275,7 +1430,9 @@ app.put('/api/locations/:id', async (req, res) => {
     if (!updated) return res.status(404).json({ error: 'Location not found.' });
     res.json(updated);
   } catch (error) {
-    console.error('Error updating location:', error);
+    // console.error('Error updating location:', error);
+
+
     res.status(500).json({ error: 'Failed to update location.' });
   }
 });
@@ -1292,7 +1449,9 @@ app.put('/api/categories/:id', async (req, res) => {
     if (!updated) return res.status(404).json({ error: 'Category not found.' });
     res.json(updated);
   } catch (error) {
-    console.error('Error updating category:', error);
+    // console.error('Error updating category:', error);
+
+
     res.status(500).json({ error: 'Failed to update category.' });
   }
 });
@@ -1305,7 +1464,9 @@ app.delete('/api/locations/:id', async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Location not found.' });
     res.json({ message: 'Location deleted successfully.' });
   } catch (error) {
-    console.error('Error deleting location:', error);
+    // console.error('Error deleting location:', error);
+
+
     res.status(500).json({ error: 'Failed to delete location.' });
   }
 });
@@ -1318,7 +1479,9 @@ app.delete('/api/categories/:id', async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Category not found.' });
     res.json({ message: 'Category deleted successfully.' });
   } catch (error) {
-    console.error('Error deleting category:', error);
+    // console.error('Error deleting category:', error);
+
+
     res.status(500).json({ error: 'Failed to delete category.' });
   }
 });

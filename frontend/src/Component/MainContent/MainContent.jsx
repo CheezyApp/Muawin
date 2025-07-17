@@ -89,6 +89,7 @@ const MainContent = ({ user }) => {
       { name: 'Security', image: '/images/security.webp' },
       { name: 'Admin Policies and SOPs', image: '/images/admin_icon.webp' },
       { name: 'Rental Agreements', image: '/images/rental_agreements.webp' },
+      { name: 'HR Portal', image: '/images/rental_agreements.webp' },
       { name: 'User Management', image: '/images/user_management.webp' },
     ];
     return allTiles.filter((tile) =>
@@ -100,7 +101,9 @@ const MainContent = ({ user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('No authentication token found');
+        // console.error('No authentication token found');
+
+
         return;
       }
 
@@ -117,7 +120,8 @@ const MainContent = ({ user }) => {
       const data = await response.json();
       setLatestAnnouncement(data);
     } catch (error) {
-      console.error('Error fetching the latest announcement:', error);
+      // console.error('Error fetching the latest announcement:', error);
+
     }
   };
 
@@ -126,7 +130,8 @@ const MainContent = ({ user }) => {
   }, []);
 
   useEffect(() => {
-    console.log('User data in MainContent:', user);
+    // console.log('User data in MainContent:', user);
+
   }, [user]);
 
   // Don't render if user is null (after all hooks)

@@ -35,7 +35,9 @@ const ModulesGrid = () => {
   };
 
   const handleSubheadingClick = (path) => {
-    console.log("Navigating to: ", path); // Debug log to check the path
+    // console.log("Navigating to: ", path);
+
+
     navigate(path); // This navigates to the path
   };
 
@@ -111,7 +113,7 @@ const ModulesGrid = () => {
                   >
                     {module.subheadings.map((subheading, subIndex) => (
                       // <Tooltip key={subIndex} title={subheading} arrow placement="right">
-                        <Button
+                        (<Button
                           key={subIndex}
                           variant="text"
                           sx={{
@@ -128,7 +130,7 @@ const ModulesGrid = () => {
                           onClick={() => handleSubheadingClick(subheading.path)} // Use subheading's specific path
                         >
                           {subheading.title}
-                        </Button>
+                        </Button>)
                       // </Tooltip>
                     ))}
                   </Box>

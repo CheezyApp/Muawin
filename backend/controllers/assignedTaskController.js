@@ -21,7 +21,9 @@ const completeAssignedTask = async (req, res) => {
 
     res.status(200).json({ message: 'Assigned task marked as completed' });
   } catch (error) {
-    console.error('Error marking assigned task as completed:', error);
+    // console.error('Error marking assigned task as completed:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -48,7 +50,9 @@ const getAssignedTasks = async (req, res) => {
     const assignedTasks = await AssignedTask.find(filter);
     res.status(200).json(assignedTasks);
   } catch (error) {
-    console.error('Error fetching user assigned tasks:', error);
+    // console.error('Error fetching user assigned tasks:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -73,7 +77,9 @@ const addAssignedTask = async (req, res) => {
     await newAssignedTask.save();
     res.status(201).json({ message: 'Assigned task added successfully', task: newAssignedTask });
   } catch (error) {
-    console.error('Error adding assigned task:', error);
+    // console.error('Error adding assigned task:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };

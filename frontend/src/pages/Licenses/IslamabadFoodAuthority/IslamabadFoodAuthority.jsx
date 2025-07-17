@@ -115,7 +115,9 @@ const IslamabadFoodAuthority = ({ open, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for fetching zones.');
+        // console.error('Authentication token not found for fetching zones.');
+
+
         return;
       }
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/zones`, {
@@ -126,7 +128,8 @@ const IslamabadFoodAuthority = ({ open, user }) => {
       const zonesData = await response.json();
       setZones(zonesData);
     } catch (error) {
-      console.error('Error fetching zones:', error);
+      // console.error('Error fetching zones:', error);
+
     }
   }, []);
 
@@ -135,7 +138,9 @@ const IslamabadFoodAuthority = ({ open, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for fetching branches.');
+        // console.error('Authentication token not found for fetching branches.');
+
+
         return;
       }
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/zones/${zoneName}/branches`, {
@@ -146,14 +151,17 @@ const IslamabadFoodAuthority = ({ open, user }) => {
       const branchesData = await response.json();
       setBranches(branchesData);
     } catch (error) {
-      console.error('Error fetching branches:', error);
+      // console.error('Error fetching branches:', error);
+
     }
   }, []);
 
   // Fetch files with caching
   const fetchFiles = useCallback(async (forceRefresh = false) => {
     if (!selectedZone || !selectedBranch) {
-      console.log('No zone or branch selected, skipping fetch');
+      // console.log('No zone or branch selected, skipping fetch');
+
+
       setLoading(false);
       return;
     }
@@ -172,7 +180,9 @@ const IslamabadFoodAuthority = ({ open, user }) => {
     
     // Add timeout to prevent infinite loading
     const timeoutId = setTimeout(() => {
-      console.error('Fetch timeout - taking too long');
+      // console.error('Fetch timeout - taking too long');
+
+
       setSnackbarMessage('Request timed out. Please try again.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -182,7 +192,9 @@ const IslamabadFoodAuthority = ({ open, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for fetching files.');
+        // console.error('Authentication token not found for fetching files.');
+
+
         setSnackbarMessage('Authentication required to fetch files.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
@@ -195,7 +207,8 @@ const IslamabadFoodAuthority = ({ open, user }) => {
       const encodedZone = encodeURIComponent(selectedZone.trim());
       const encodedBranch = encodeURIComponent(selectedBranch.trim());
 
-      console.log(`Fetching files for zone: ${encodedZone}, branch: ${encodedBranch}`);
+      // console.log(`Fetching files for zone: ${encodedZone}, branch: ${encodedBranch}`);
+
 
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/files/licenses-tradelicenses-ifa/${encodedZone}/${encodedBranch}`, {
         headers: {
@@ -207,23 +220,33 @@ const IslamabadFoodAuthority = ({ open, user }) => {
 
       if (response.ok) {
         const filesData = await response.json();
-        console.log(`Successfully fetched ${filesData.length} files`);
+
+        // console.log(`Successfully fetched ${filesData.length} files`);
+
+
         setFiles(filesData);
         // Cache the results
         setCachedFiles(selectedZone, selectedBranch, filesData);
       } else if (response.status === 404) {
-        console.log('No files found for this zone and branch.');
+        // console.log('No files found for this zone and branch.');
+
+
         setFiles([]);
         setCachedFiles(selectedZone, selectedBranch, []);
       } else {
-        console.error('Error fetching files:', response.statusText);
+        // console.error('Error fetching files:', response.statusText);
+
+
         setSnackbarMessage(`Failed to fetch files: ${response.statusText}`);
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
     } catch (error) {
       clearTimeout(timeoutId);
-      console.error('Error fetching files:', error);
+
+      // console.error('Error fetching files:', error);
+
+
       setSnackbarMessage(`Error fetching files: ${error.message}`);
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -292,8 +315,8 @@ const IslamabadFoodAuthority = ({ open, user }) => {
         return await uploadSingleFile(file, progressCallback);
       },
       (fileId, progress, fileName) => {
-        // Update progress for individual files
-        console.log(`Progress for ${fileName}: ${progress}%`);
+        // console.log(`Progress for ${fileName}: ${progress}%`);
+
       },
       (results, errors) => {
         // Remove optimistic files and add real ones
@@ -420,7 +443,9 @@ const IslamabadFoodAuthority = ({ open, user }) => {
         throw new Error('Failed to delete file.');
       }
     } catch (error) {
-      console.error('Error deleting file:', error);
+      // console.error('Error deleting file:', error);
+
+
       setSnackbarMessage('Error occurred while deleting the file.');
       setSnackbarSeverity('error');
       // Revert optimistic update on error
@@ -478,13 +503,18 @@ const IslamabadFoodAuthority = ({ open, user }) => {
         document.body.removeChild(a);
       } else {
         const errorMessage = await response.text();
-        console.error('Failed to view file:', response.statusText, errorMessage);
+
+        // console.error('Failed to view file:', response.statusText, errorMessage);
+
+
         setSnackbarMessage('Failed to view file.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
     } catch (error) {
-      console.error('Error viewing file:', error);
+      // console.error('Error viewing file:', error);
+
+
       setSnackbarMessage('Error occurred while viewing the file.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -494,7 +524,9 @@ const IslamabadFoodAuthority = ({ open, user }) => {
   // Manual refresh function with better error handling
   const handleManualRefresh = useCallback(async () => {
     if (loading) {
-      console.log('Already loading, skipping refresh');
+      // console.log('Already loading, skipping refresh');
+
+
       return;
     }
 
@@ -505,7 +537,9 @@ const IslamabadFoodAuthority = ({ open, user }) => {
       return;
     }
 
-    console.log('Manual refresh triggered');
+    // console.log('Manual refresh triggered');
+
+
     setSnackbarMessage('Refreshing files...');
     setSnackbarSeverity('info');
     setSnackbarOpen(true);
@@ -516,7 +550,9 @@ const IslamabadFoodAuthority = ({ open, user }) => {
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Manual refresh failed:', error);
+      // console.error('Manual refresh failed:', error);
+
+
       setSnackbarMessage('Failed to refresh files. Please try again.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);

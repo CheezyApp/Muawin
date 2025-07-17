@@ -31,10 +31,13 @@ const AddLocationButton = ({ onLocationAdded }) => {
         handleCloseAddLocation();
       } else {
         const errorMsg = await response.text();
-        console.error('Error adding location:', errorMsg);
+
+        // console.error('Error adding location:', errorMsg);
+
       }
     } catch (error) {
-      console.error('Error adding location:', error);
+      // console.error('Error adding location:', error);
+
     }
   };
 

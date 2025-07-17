@@ -14,7 +14,9 @@ const TodoList = ({ userZone, userBranch }) => {
 
   useEffect(() => {
     if (!userZone || !userBranch) {
-      console.error('Required parameters are missing:', { userZone, userBranch });
+      // console.error('Required parameters are missing:', { userZone, userBranch });
+
+
       setSnackbarMessage('Failed to load tasks: Missing zone or branch information.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -23,7 +25,9 @@ const TodoList = ({ userZone, userBranch }) => {
 
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('Authentication token not found.');
+      // console.error('Authentication token not found.');
+
+
       setSnackbarMessage('Failed to load tasks: Authentication token not found.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -48,11 +52,13 @@ const TodoList = ({ userZone, userBranch }) => {
         }
       })
       .catch((error) => {
-        console.error('Error fetching tasks:', error);
-        setSnackbarMessage('Failed to load tasks. Please try again later.');
-        setSnackbarSeverity('error');
-        setSnackbarOpen(true);
-      });
+      // console.error('Error fetching tasks:', error);
+
+
+      setSnackbarMessage('Failed to load tasks. Please try again later.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    });
   }, [userZone, userBranch]);
 
   const handleMarkAll = async () => {
@@ -60,7 +66,9 @@ const TodoList = ({ userZone, userBranch }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found.');
+        // console.error('Authentication token not found.');
+
+
         setSnackbarMessage('Failed to mark tasks: Authentication token not found.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
@@ -81,7 +89,9 @@ const TodoList = ({ userZone, userBranch }) => {
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Error marking all tasks as completed:', error);
+      // console.error('Error marking all tasks as completed:', error);
+
+
       setSnackbarMessage('Failed to mark all tasks as completed.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -96,7 +106,9 @@ const TodoList = ({ userZone, userBranch }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found.');
+        // console.error('Authentication token not found.');
+
+
         setSnackbarMessage('Failed to update task: Authentication token not found.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
@@ -115,7 +127,9 @@ const TodoList = ({ userZone, userBranch }) => {
       setSnackbarSeverity('success');
       setSnackbarOpen(true);
     } catch (error) {
-      console.error('Error toggling task completion:', error);
+      // console.error('Error toggling task completion:', error);
+
+
       setSnackbarMessage('Failed to update task status.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);

@@ -43,7 +43,8 @@ const UserRequests = ({ open }) => {
         const ticketData = await response.json();
         setTickets(ticketData);
       } catch (error) {
-        console.error('Error fetching tickets:', error);
+        // console.error('Error fetching tickets:', error);
+
       }
     };
 

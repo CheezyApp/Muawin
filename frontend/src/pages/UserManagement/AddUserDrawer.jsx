@@ -57,6 +57,7 @@ const modules = [
   { main: 'Taxation', subModules: ['Marketing / Bill Boards Taxes', 'Profession Tax'] },
   { main: 'Certificates', subModules: ['Electric Fitness Test'] },
   { main: 'Security', subModules: ['Guard Training'] },
+  { main: 'HR Portal', subModules: ['Hiring Applications'] },
   { main: 'Admin Policies and SOPs', subModules: [] },
   { main: 'Rental Agreements', subModules: [] },
   { main: 'User Management', subModules: [] },

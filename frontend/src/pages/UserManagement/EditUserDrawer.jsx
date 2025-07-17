@@ -76,9 +76,14 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
   const fetchZones = async () => {
     try {
       const token = localStorage.getItem('token'); // Get token from localStorage
-      console.log('Fetching zones in EditUserDrawer. Token:', token); // Log the token here
+
+      // console.log('Fetching zones in EditUserDrawer. Token:', token);
+
+
       if (!token) {
-        console.error('Authentication token not found for fetching zones in EditUserDrawer.');
+        // console.error('Authentication token not found for fetching zones in EditUserDrawer.');
+
+
         return;
       }
       const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/zones`, {
@@ -88,7 +93,8 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
       });
       setZones(response.data);
     } catch (error) {
-      console.error('Error fetching zones:', error);
+      // console.error('Error fetching zones:', error);
+
     }
   };
 
@@ -97,7 +103,9 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
     try {
       const token = localStorage.getItem('token'); // Get token from localStorage
       if (!token) {
-        console.error('Authentication token not found for fetching branches in EditUserDrawer.');
+        // console.error('Authentication token not found for fetching branches in EditUserDrawer.');
+
+
         return;
       }
       const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/zones/${zoneName}/branches`, {
@@ -107,7 +115,9 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
       });
       setBranches(response.data);
     } catch (error) {
-      console.error('Error fetching branches:', error);
+      // console.error('Error fetching branches:', error);
+
+
       setBranches([]);
     }
   };
@@ -139,7 +149,7 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
   // Handle save changes
   const handleSaveChanges = async () => {
     const name = `${formValues.firstName} ${formValues.lastName}`.trim();
-  
+
     const updatePayload = {
       name,
       displayName: formValues.displayName,
@@ -147,19 +157,24 @@ const EditUserDrawer = ({ open, onClose, user, onUserUpdated }) => {
       branch: formValues.branch,
       zone: formValues.zone,
     };
-  
-    console.log("Update payload being sent:", updatePayload); // Log payload
-  
+
+    // console.log("Update payload being sent:", updatePayload);
+
+
     try {
       // Use userId directly in the URL path
       const response = await axios.put(`${process.env.REACT_APP_API_BASE_URL}/users/${user._id}`, updatePayload);
-      console.log('Response from server:', response.data); // Log response
+
+      // console.log('Response from server:', response.data);
+
+
       setNotificationOpen(true); // Show success notification
       setDrawerCloseNotificationOpen(true); // Show snackbar when drawer closes
       onUserUpdated(); // Refresh user list or any other necessary actions
       onClose(); // Close the drawer
     } catch (error) {
-      console.error('Error updating user:', error.response ? error.response.data : error.message);
+      // console.error('Error updating user:', error.response ? error.response.data : error.message);
+
     }
   };
 

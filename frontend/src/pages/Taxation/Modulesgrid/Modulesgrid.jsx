@@ -15,7 +15,9 @@ const ModulesGrid = ({ user }) => {
 
   // Filter modules based on user's registeredModules
   const modules = useMemo(() => {
-    console.log('User data:', user); // Debug log to verify user data
+    // console.log('User data:', user);
+
+
     const allModules = [
         {
             name: 'Taxation_Marketing / BillBoards Taxes',
@@ -40,9 +42,11 @@ const ModulesGrid = ({ user }) => {
         )
     );
 
-    console.log('Filtered modules:', filteredModules); // Debug log to verify filtered modules
+    // console.log('Filtered modules:', filteredModules);
+
+
     return filteredModules;
-}, [user]);
+  }, [user]);
 
   const handleTileClick = (index, hasSubheadings) => {
     if (hasSubheadings) {
@@ -53,7 +57,9 @@ const ModulesGrid = ({ user }) => {
   };
 
   const handleSubheadingClick = (path) => {
-    console.log("Navigating to: ", path); // Debug log to check the path
+    // console.log("Navigating to: ", path);
+
+
     navigate(path); // This navigates to the path
   };
 

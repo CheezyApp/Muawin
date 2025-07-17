@@ -13,7 +13,8 @@ export const usePerformanceMonitor = (componentName) => {
 
     // Log performance metrics in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[${componentName}] Render #${renderCount.current} - Time since last render: ${timeSinceLastRender.toFixed(2)}ms`);
+      // console.log(`[${componentName}] Render #${renderCount.current} - Time since last render: ${timeSinceLastRender.toFixed(2)}ms`);
+
     }
   });
 
@@ -24,7 +25,8 @@ export const usePerformanceMonitor = (componentName) => {
     const end = performance.now();
     
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[${componentName}] ${label}: ${(end - start).toFixed(2)}ms`);
+      // console.log(`[${componentName}] ${label}: ${(end - start).toFixed(2)}ms`);
+
     }
     
     return result;
@@ -37,7 +39,8 @@ export const usePerformanceMonitor = (componentName) => {
     const end = performance.now();
     
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[${componentName}] ${label}: ${(end - start).toFixed(2)}ms`);
+      // console.log(`[${componentName}] ${label}: ${(end - start).toFixed(2)}ms`);
+
     }
     
     return result;

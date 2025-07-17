@@ -24,7 +24,9 @@ router.post('/', async (req, res) => {
     await newLocation.save();
     res.status(201).json(newLocation);
   } catch (error) {
-    console.error('Error adding location:', error);
+    // console.error('Error adding location:', error);
+
+
     res.status(500).json({ error: 'Failed to add location.' });
   }
 });
@@ -40,7 +42,9 @@ router.put('/:id', async (req, res) => {
     if (!updated) return res.status(404).json({ error: 'Location not found.' });
     res.json(updated);
   } catch (error) {
-    console.error('Error updating location:', error);
+    // console.error('Error updating location:', error);
+
+
     res.status(500).json({ error: 'Failed to update location.' });
   }
 });
@@ -53,7 +57,9 @@ router.delete('/:id', async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Location not found.' });
     res.json({ message: 'Location deleted successfully.' });
   } catch (error) {
-    console.error('Error deleting location:', error);
+    // console.error('Error deleting location:', error);
+
+
     res.status(500).json({ error: 'Failed to delete location.' });
   }
 });

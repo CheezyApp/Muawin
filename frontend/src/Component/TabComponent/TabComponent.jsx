@@ -57,7 +57,9 @@ const TabsComponent = ({ latestAnnouncement, userId, userZone, userBranch, userE
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('Authentication token not found.');
+          // console.error('Authentication token not found.');
+
+
           return;
         }
 
@@ -72,7 +74,9 @@ const TabsComponent = ({ latestAnnouncement, userId, userZone, userBranch, userE
           setMajorAnnouncements([]);
         }
       } catch (error) {
-        console.error('Error fetching major announcements:', error);
+        // console.error('Error fetching major announcements:', error);
+
+
         setMajorAnnouncements([]);
       }
     };
@@ -81,7 +85,9 @@ const TabsComponent = ({ latestAnnouncement, userId, userZone, userBranch, userE
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('Authentication token not found.');
+          // console.error('Authentication token not found.');
+
+
           return;
         }
 
@@ -97,7 +103,9 @@ const TabsComponent = ({ latestAnnouncement, userId, userZone, userBranch, userE
         });
         setAssignedTasks(response.data);
       } catch (error) {
-        console.error('Error fetching assigned tasks:', error);
+        // console.error('Error fetching assigned tasks:', error);
+
+
         setAssignedTasks([]);
       }
     };
@@ -107,7 +115,8 @@ const TabsComponent = ({ latestAnnouncement, userId, userZone, userBranch, userE
   }, [apiBaseUrl, userId, userZone, userBranch, refreshTrigger]);
 
   useEffect(() => {
-    console.log("TabsComponent parameters:", { userId, userZone, userBranch, userEmail });
+    // console.log("TabsComponent parameters:", { userId, userZone, userBranch, userEmail });
+
   }, [userId, userZone, userBranch, userEmail]);
 
   const handleTabChange = (event, newValue) => {

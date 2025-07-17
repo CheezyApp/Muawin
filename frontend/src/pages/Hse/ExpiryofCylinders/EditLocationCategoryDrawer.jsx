@@ -54,7 +54,9 @@ const EditLocationCategoryDrawer = ({
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found');
+        // console.error('Authentication token not found');
+
+
         return;
       }
 
@@ -98,7 +100,8 @@ const EditLocationCategoryDrawer = ({
         if (response.ok) deleteTarget === 'location' ? onLocationUpdated() : onCategoryUpdated();
       }
     } catch (error) {
-      console.error('Error performing operation:', error);
+      // console.error('Error performing operation:', error);
+
     }
     onClose();
   };

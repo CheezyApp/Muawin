@@ -15,7 +15,9 @@ const ModulesGrid = ({ user }) => {
 
   // Filter modules based on user's registeredModules
   const modules = useMemo(() => {
-    console.log('User data:', user); // Debug log to verify user data
+    // console.log('User data:', user);
+
+
     const allModules = [
       {
         name: 'Vehicles_Maintenance',
@@ -61,7 +63,9 @@ const ModulesGrid = ({ user }) => {
       })
       .filter((module) => module !== null);
 
-    console.log('Filtered modules:', filteredModules); // Debug log to verify filtered modules
+    // console.log('Filtered modules:', filteredModules);
+
+
     return filteredModules;
   }, [user]);
 
@@ -72,7 +76,9 @@ const ModulesGrid = ({ user }) => {
   };
 
   const handleSubheadingClick = (path) => {
-    console.log("Navigating to: ", path); // Debug log to check the path
+    // console.log("Navigating to: ", path);
+
+
     navigate(path); // This navigates to the path
   };
 

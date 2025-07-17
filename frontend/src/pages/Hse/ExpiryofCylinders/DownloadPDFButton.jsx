@@ -31,8 +31,8 @@ const DownloadPDFButton = ({ cylinders, branchName }) => {
         try {
             logoData = await getBase64FromUrl(logoUrl);
         } catch (error) {
-            console.error('Error loading logo image:', error);
-            // Proceed without image if there's an error
+            // console.error('Error loading logo image:', error);
+
         }
 
         const title = "Cylinder Expiry Sheet";

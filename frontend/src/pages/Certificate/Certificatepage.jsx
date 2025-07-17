@@ -47,7 +47,7 @@ const Certificatepage = ({user}) => {
           fontFamily: 'TanseekModernW20',
         }}
       >
-        APPROVALS
+        CERTIFICATES
       </Typography>
 
       {/* Modules Section */}

@@ -20,10 +20,11 @@ const modules = [
   { _id: '15', name: 'Taxation_Marketing / Bill Boards Taxes' },
   { _id: '16', name: 'Certificates_Electric Fitness Test' },
   { _id: '17', name: 'Security_Guard Training' },
-  { _id: '18', name: 'User Requests' },
-  { _id: '19', name: 'Rental Agreements' },
-  { _id: '20', name: 'Admin Policies and SOPs' },
-  { _id: '21', name: 'User Management_' }
+  { _id: '18', name: 'HR Portal_Hiring Applications' },
+  { _id: '19', name: 'User Requests' },
+  { _id: '20', name: 'Rental Agreements' },
+  { _id: '21', name: 'Admin Policies and SOPs' },
+  { _id: '22', name: 'User Management_' }
 ];
 
 router.get('/', (req, res) => {

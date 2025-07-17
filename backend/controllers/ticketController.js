@@ -19,7 +19,9 @@ const createTicket = async (req, res) => {
     await newTicket.save(); // Save the ticket in MongoDB
     res.status(201).json({ message: 'Ticket created successfully', ticket: newTicket });
   } catch (error) {
-    console.error('Error creating ticket:', error);
+    // console.error('Error creating ticket:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -30,7 +32,9 @@ const getAllTickets = async (req, res) => {
     const tickets = await Ticket.find(); // Retrieve all tickets
     res.status(200).json(tickets);
   } catch (error) {
-    console.error('Error fetching tickets:', error);
+    // console.error('Error fetching tickets:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -46,7 +50,9 @@ const getTicketById = async (req, res) => {
 
     res.status(200).json(ticket);
   } catch (error) {
-    console.error('Error fetching ticket:', error);
+    // console.error('Error fetching ticket:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -68,7 +74,9 @@ const updateTicketStatus = async (req, res) => {
 
     res.status(200).json({ message: 'Ticket status updated', ticket });
   } catch (error) {
-    console.error('Error updating ticket status:', error);
+    // console.error('Error updating ticket status:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -84,7 +92,9 @@ const deleteTicket = async (req, res) => {
 
     res.status(200).json({ message: 'Ticket deleted successfully' });
   } catch (error) {
-    console.error('Error deleting ticket:', error);
+    // console.error('Error deleting ticket:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };

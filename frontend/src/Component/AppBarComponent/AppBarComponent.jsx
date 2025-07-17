@@ -84,7 +84,9 @@ function AppBarComponent({
       setNotifications(response.notifications);
       setUnreadCount(response.unread);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      // console.error('Error fetching notifications:', error);
+
+
       setError('Failed to fetch notifications');
     } finally {
       setLoading(false);
@@ -105,7 +107,8 @@ function AppBarComponent({
       );
       setUnreadCount(prev => Math.max(0, prev - notificationIds.length));
     } catch (error) {
-      console.error('Error marking notifications as read:', error);
+      // console.error('Error marking notifications as read:', error);
+
     }
   };
 

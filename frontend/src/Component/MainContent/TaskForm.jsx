@@ -14,7 +14,9 @@ const TaskForm = ({ onClose, userBranch }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No authentication token found');
+      // console.error('No authentication token found');
+
+
       return;
     }
 
@@ -38,7 +40,9 @@ const TaskForm = ({ onClose, userBranch }) => {
     if (selectedZone) {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('No authentication token found');
+        // console.error('No authentication token found');
+
+
         return;
       }
 
@@ -85,7 +89,9 @@ const TaskForm = ({ onClose, userBranch }) => {
   // Save tasks to the backend
   const handleSaveTasks = () => {
     if (!selectedBranch) {
-      console.error('Branch is required to save tasks.');
+      // console.error('Branch is required to save tasks.');
+
+
       return;
     }
 
@@ -102,7 +108,9 @@ const TaskForm = ({ onClose, userBranch }) => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('No authentication token found');
+          // console.error('No authentication token found');
+
+
           // You might want to show a Snackbar here as well
           return;
         }
@@ -117,12 +125,15 @@ const TaskForm = ({ onClose, userBranch }) => {
         });
 
         if (response.ok) {
-          console.log('Task added successfully');
+          // console.log('Task added successfully');
+
         } else {
-          console.error('Error adding task');
+          // console.error('Error adding task');
+
         }
       } catch (error) {
-        console.error('Error in save tasks:', error);
+        // console.error('Error in save tasks:', error);
+
       }
     });
 

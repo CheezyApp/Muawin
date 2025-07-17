@@ -4,7 +4,9 @@ const useErrorHandler = () => {
   const [error, setError] = useState(null);
 
   const handleError = useCallback((error) => {
-    console.error('Error occurred:', error);
+    // console.error('Error occurred:', error);
+
+
     setError(error?.message || 'An unexpected error occurred');
   }, []);
 

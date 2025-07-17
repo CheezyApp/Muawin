@@ -24,7 +24,9 @@ router.post('/', async (req, res) => {
     await newCategory.save();
     res.status(201).json(newCategory);
   } catch (error) {
-    console.error('Error adding category:', error);
+    // console.error('Error adding category:', error);
+
+
     res.status(500).json({ error: 'Failed to add category.' });
   }
 });
@@ -40,7 +42,9 @@ router.put('/:id', async (req, res) => {
     if (!updated) return res.status(404).json({ error: 'Category not found.' });
     res.json(updated);
   } catch (error) {
-    console.error('Error updating category:', error);
+    // console.error('Error updating category:', error);
+
+
     res.status(500).json({ error: 'Failed to update category.' });
   }
 });
@@ -53,7 +57,9 @@ router.delete('/:id', async (req, res) => {
     if (!deleted) return res.status(404).json({ error: 'Category not found.' });
     res.json({ message: 'Category deleted successfully.' });
   } catch (error) {
-    console.error('Error deleting category:', error);
+    // console.error('Error deleting category:', error);
+
+
     res.status(500).json({ error: 'Failed to delete category.' });
   }
 });

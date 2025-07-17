@@ -21,7 +21,9 @@ const getUserNotifications = async (req, res) => {
       unread
     });
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    // console.error('Error fetching notifications:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -42,7 +44,9 @@ const markAsRead = async (req, res) => {
 
     res.status(200).json({ message: 'Notifications marked as read' });
   } catch (error) {
-    console.error('Error marking notifications as read:', error);
+    // console.error('Error marking notifications as read:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -54,7 +58,9 @@ const createNotification = async (data) => {
     await notification.save();
     return notification;
   } catch (error) {
-    console.error('Error creating notification:', error);
+    // console.error('Error creating notification:', error);
+
+
     throw error;
   }
 };
@@ -68,7 +74,9 @@ const createNotificationsForUsers = async (users, data) => {
 
     await Notification.insertMany(notifications);
   } catch (error) {
-    console.error('Error creating notifications for users:', error);
+    // console.error('Error creating notifications for users:', error);
+
+
     throw error;
   }
 };
@@ -82,7 +90,9 @@ const createNotificationsForZoneBranch = async (zone, branch, data) => {
     const users = await User.find(query);
     await createNotificationsForUsers(users, data);
   } catch (error) {
-    console.error('Error creating notifications for zone/branch:', error);
+    // console.error('Error creating notifications for zone/branch:', error);
+
+
     throw error;
   }
 };

@@ -64,7 +64,9 @@ const ExpiryofCylinders = ({ open, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for fetching zones.');
+        // console.error('Authentication token not found for fetching zones.');
+
+
         return;
       }
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/zones`, {
@@ -75,7 +77,8 @@ const ExpiryofCylinders = ({ open, user }) => {
       const zonesData = await response.json();
       setZones(zonesData);
     } catch (error) {
-      console.error('Error fetching zones:', error);
+      // console.error('Error fetching zones:', error);
+
     }
   };
 
@@ -83,7 +86,9 @@ const ExpiryofCylinders = ({ open, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for fetching branches.');
+        // console.error('Authentication token not found for fetching branches.');
+
+
         return;
       }
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/zones/${zoneName}/branches`, {
@@ -94,7 +99,8 @@ const ExpiryofCylinders = ({ open, user }) => {
       const branchesData = await response.json();
       setBranches(branchesData);
     } catch (error) {
-      console.error('Error fetching branches:', error);
+      // console.error('Error fetching branches:', error);
+
     }
   };
 
@@ -105,7 +111,9 @@ const ExpiryofCylinders = ({ open, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for fetching cylinders.');
+        // console.error('Authentication token not found for fetching cylinders.');
+
+
         setSnackbarMessage('Authentication required to fetch cylinders.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
@@ -125,13 +133,17 @@ const ExpiryofCylinders = ({ open, user }) => {
         const cylinderData = await response.json();
         setCylinders(cylinderData);
       } else if (response.status === 404) {
-        console.error('No cylinders found for this zone and branch.');
+        // console.error('No cylinders found for this zone and branch.');
+
+
         setCylinders([]);
       } else {
-        console.error('Error fetching cylinders:', response.statusText);
+        // console.error('Error fetching cylinders:', response.statusText);
+
       }
     } catch (error) {
-      console.error('Error fetching cylinders:', error);
+      // console.error('Error fetching cylinders:', error);
+
     }
     setLoading(false);
   }, [selectedZone, selectedBranch]);
@@ -157,7 +169,9 @@ const ExpiryofCylinders = ({ open, user }) => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('Authentication token not found for fetching locations/categories.');
+          // console.error('Authentication token not found for fetching locations/categories.');
+
+
           setSnackbarMessage('Authentication required to fetch locations/categories.');
           setSnackbarSeverity('error');
           setSnackbarOpen(true);
@@ -179,7 +193,8 @@ const ExpiryofCylinders = ({ open, user }) => {
         const catData = await catRes.json();
         setAvailableCategories(catData);
       } catch (error) {
-        console.error('Error fetching locations/categories:', error);
+        // console.error('Error fetching locations/categories:', error);
+
       }
     };
 
@@ -192,17 +207,23 @@ const ExpiryofCylinders = ({ open, user }) => {
   };
 
   const handleDeleteConfirm = async () => {
-    console.log("Deleting ID:", cylinderToDelete);
+    // console.log("Deleting ID:", cylinderToDelete);
+
+
     setConfirmDeleteOpen(false);
     if (!cylinderToDelete) {
-      console.log("No cylinderToDelete set.");
+      // console.log("No cylinderToDelete set.");
+
+
       return;
     }
 
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for cylinder deletion.');
+        // console.error('Authentication token not found for cylinder deletion.');
+
+
         setSnackbarMessage('Authentication required to delete cylinder record.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
@@ -215,18 +236,25 @@ const ExpiryofCylinders = ({ open, user }) => {
         }
       });
       if (response.ok) {
-        console.log("Delete successful");
+        // console.log("Delete successful");
+
+
         setCylinders((prev) => prev.filter((cyl) => cyl._id !== cylinderToDelete));
         setSnackbarMessage('Cylinder record deleted successfully.');
         setSnackbarSeverity('success');
       } else {
         const errorText = await response.text();
-        console.error('Failed to delete cylinder:', response.statusText, errorText);
+
+        // console.error('Failed to delete cylinder:', response.statusText, errorText);
+
+
         setSnackbarMessage('Failed to delete cylinder record.');
         setSnackbarSeverity('error');
       }
     } catch (error) {
-      console.error('Error deleting cylinder:', error);
+      // console.error('Error deleting cylinder:', error);
+
+
       setSnackbarMessage('Error occurred while deleting cylinder record.');
       setSnackbarSeverity('error');
     }
@@ -263,7 +291,9 @@ const ExpiryofCylinders = ({ open, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for adding location.');
+        // console.error('Authentication token not found for adding location.');
+
+
         setSnackbarMessage('Authentication required to add location.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
@@ -284,13 +314,18 @@ const ExpiryofCylinders = ({ open, user }) => {
         handleCloseAddLocation();
       } else {
         const errorMsg = await response.text();
-        console.error('Error adding location:', errorMsg);
+
+        // console.error('Error adding location:', errorMsg);
+
+
         setSnackbarMessage('Failed to add location.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
     } catch (error) {
-      console.error('Error adding location:', error);
+      // console.error('Error adding location:', error);
+
+
       setSnackbarMessage('Error occurred while adding location.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -311,7 +346,9 @@ const ExpiryofCylinders = ({ open, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for adding category.');
+        // console.error('Authentication token not found for adding category.');
+
+
         setSnackbarMessage('Authentication required to add category.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
@@ -332,13 +369,18 @@ const ExpiryofCylinders = ({ open, user }) => {
         handleCloseAddCategory();
       } else {
         const errorMsg = await response.text();
-        console.error('Error adding category:', errorMsg);
+
+        // console.error('Error adding category:', errorMsg);
+
+
         setSnackbarMessage('Failed to add category.');
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
     } catch (error) {
-      console.error('Error adding category:', error);
+      // console.error('Error adding category:', error);
+
+
       setSnackbarMessage('Error occurred while adding category.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);

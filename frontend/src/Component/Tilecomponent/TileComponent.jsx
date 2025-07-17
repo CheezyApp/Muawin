@@ -92,11 +92,15 @@ const Tile = ({ name, image }) => {
       case 'Rental Agreements':
         navigate('/RentalAgreements');
         break;
+      case 'HR Portal':
+        navigate('/HRPortal');
+        break;
       case 'User Management':
         navigate('/UserManagement');
         break;
       default:
-        console.log(`${name} clicked`);
+        // console.log(`${name} clicked`);
+
     }
   };
 

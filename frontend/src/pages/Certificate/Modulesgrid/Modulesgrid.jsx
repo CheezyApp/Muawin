@@ -108,7 +108,7 @@ const ModulesGrid = () => {
                   >
                     {module.subheadings.map((subheading, subIndex) => (
                       // <Tooltip key={subIndex} title={subheading} arrow placement="top">  */}
-                        <Button
+                        (<Button
                           variant="text"
                           sx={{
                             color: isDarkMode ? '#FFF' : '#000',
@@ -124,7 +124,7 @@ const ModulesGrid = () => {
                           onClick={() => handleSubheadingClick(module.path)}
                         >
                           {subheading}
-                        </Button>
+                        </Button>)
                       // </Tooltip>
                     ))}
                   </Box>

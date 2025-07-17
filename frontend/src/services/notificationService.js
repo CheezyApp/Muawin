@@ -12,7 +12,9 @@ const getNotifications = async (limit = 20, skip = 0) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    // console.error('Error fetching notifications:', error);
+
+
     throw error;
   }
 };
@@ -31,7 +33,9 @@ const markAsRead = async (notificationIds) => {
     );
     return response.data;
   } catch (error) {
-    console.error('Error marking notifications as read:', error);
+    // console.error('Error marking notifications as read:', error);
+
+
     throw error;
   }
 };

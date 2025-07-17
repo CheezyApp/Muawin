@@ -47,7 +47,9 @@ router.post('/', async (req, res) => {
     await newRecord.save();
     res.status(201).json(newRecord);
   } catch (error) {
-    console.error('Error adding cylinder expiry record:', error);
+    // console.error('Error adding cylinder expiry record:', error);
+
+
     res.status(500).json({ 
       message: 'Error adding cylinder expiry record', 
       error: error.message 
@@ -91,7 +93,9 @@ router.put('/:id', async (req, res) => {
 
     res.json(updated);
   } catch (error) {
-    console.error('Error updating cylinder expiry record:', error);
+    // console.error('Error updating cylinder expiry record:', error);
+
+
     res.status(500).json({ 
       message: 'Error updating cylinder expiry record', 
       error: error.message 
@@ -111,7 +115,9 @@ router.delete('/:id', async (req, res) => {
 
     res.json({ message: 'Cylinder expiry record deleted successfully' });
   } catch (error) {
-    console.error('Error deleting cylinder expiry record:', error);
+    // console.error('Error deleting cylinder expiry record:', error);
+
+
     res.status(500).json({ 
       message: 'Error deleting cylinder expiry record', 
       error: error.message 

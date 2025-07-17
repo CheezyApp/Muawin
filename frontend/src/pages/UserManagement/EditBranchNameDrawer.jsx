@@ -107,7 +107,9 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found');
+        // console.error('Authentication token not found');
+
+
         return;
       }
 
@@ -118,7 +120,8 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
       });
       setZones(response.data);
     } catch (error) {
-      console.error('Error fetching zones:', error);
+      // console.error('Error fetching zones:', error);
+
     }
   };
 
@@ -137,7 +140,9 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found');
+        // console.error('Authentication token not found');
+
+
         return;
       }
 
@@ -148,7 +153,8 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
       });
       setBranches(response.data);
     } catch (error) {
-      console.error('Error fetching branches:', error);
+      // console.error('Error fetching branches:', error);
+
     }
   };
 
@@ -164,7 +170,9 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found');
+        // console.error('Authentication token not found');
+
+
         return;
       }
 
@@ -206,7 +214,9 @@ const EditBranchNameDrawer = ({ open, onClose, onBranchUpdated }) => {
         onClose();
       }
     } catch (error) {
-      console.error('Error:', error.response?.data || error.message);
+      // console.error('Error:', error.response?.data || error.message);
+
+
       setSnackbarMessage(error.response?.data?.message || 'An error occurred');
       setShowSnackbar(true);
     }

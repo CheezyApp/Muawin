@@ -76,7 +76,9 @@ const HoverModalButton = () => {
               branches: branchesResponse.data
             };
           } catch (error) {
-            console.error(`Error fetching branches for zone ${zone.zoneName}:`, error);
+            // console.error(`Error fetching branches for zone ${zone.zoneName}:`, error);
+
+
             return {
               zoneName: zone.zoneName,
               branches: ['Error loading branches']
@@ -87,7 +89,9 @@ const HoverModalButton = () => {
 
       setZones(zonesWithBranches);
     } catch (error) {
-      console.error('Error fetching zones:', error);
+      // console.error('Error fetching zones:', error);
+
+
       setError(error.response?.data?.message || 'Failed to fetch zones and branches');
     } finally {
       setLoading(false);
@@ -149,7 +153,6 @@ const HoverModalButton = () => {
           <InfoIcon fontSize={isMobile ? "small" : "medium"} />
         </IconButton>
       </Tooltip>
-      
       <Modal open={open} closeAfterTransition onClose={handleClose}>
         <Fade in={open}>
           <Box sx={{ ...modalStyle, position: 'relative' }}>
@@ -187,7 +190,7 @@ const HoverModalButton = () => {
               <>
                 {isMobile ? (
                   // Mobile layout with cards
-                  <Box sx={{ 
+                  (<Box sx={{ 
                     maxHeight: '60vh', 
                     overflowY: 'auto',
                     '&::-webkit-scrollbar': {
@@ -210,10 +213,10 @@ const HoverModalButton = () => {
                         {error || 'No data available'}
                       </Typography>
                     )}
-                  </Box>
+                  </Box>)
                 ) : (
                   // Desktop layout with table
-                  <TableContainer
+                  (<TableContainer
                     component={Paper}
                     sx={{
                       maxHeight: '70vh',
@@ -307,7 +310,7 @@ const HoverModalButton = () => {
                         )}
                       </TableBody>
                     </Table>
-                  </TableContainer>
+                  </TableContainer>)
                 )}
               </>
             )}

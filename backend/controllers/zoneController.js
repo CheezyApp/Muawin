@@ -21,14 +21,18 @@ const initializeZones = async () => {
         zoneName,
         branches: initialZones[zoneName],
       }));
-      
+
       await Zone.insertMany(zonesToInsert);
-      console.log('Initial zones and branches added to MongoDB');
+
+      // console.log('Initial zones and branches added to MongoDB');
+
     } else {
-      console.log('Zones already exist in MongoDB');
+      // console.log('Zones already exist in MongoDB');
+
     }
   } catch (error) {
-    console.error('Error initializing zones:', error);
+    // console.error('Error initializing zones:', error);
+
   }
 };
 
@@ -36,10 +40,15 @@ const initializeZones = async () => {
 const getAllZones = async (req, res) => {
   try {
     const zones = await Zone.find(); // Fetch all zones
-    console.log('Fetched zones from database:', zones); // Add console log here
+
+    // console.log('Fetched zones from database:', zones);
+
+
     res.status(200).json(zones);
   } catch (error) {
-    console.error('Error fetching zones:', error);
+    // console.error('Error fetching zones:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -54,7 +63,9 @@ const getBranchesByZone = async (req, res) => {
     }
     res.status(200).json(zone.branches);
   } catch (error) {
-    console.error('Error fetching branches:', error); // Log the error
+    // console.error('Error fetching branches:', error);
+
+
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
@@ -76,7 +87,9 @@ const addBranchToZone = async (req, res) => {
 
     res.status(200).json({ message: `Branch ${branchName} added to zone ${zoneName}`, zone });
   } catch (error) {
-    console.error('Error adding branch:', error);
+    // console.error('Error adding branch:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -88,7 +101,9 @@ const updateBranchInZone = async (req, res) => {
     const { oldBranchName, newBranchName } = req.body;
 
     const zone = await Zone.findOne({ zoneName });
-    console.log("Fetched Zone:", zone); // Log the zone object to inspect its structure
+
+    // console.log("Fetched Zone:", zone);
+
 
     if (!zone) {
       return res.status(404).json({ message: 'Zone not found' });
@@ -96,7 +111,9 @@ const updateBranchInZone = async (req, res) => {
 
     // Find the branch index and update the branch name
     const branchIndex = zone.branches.indexOf(oldBranchName);
-    console.log("Branch Index:", branchIndex); // Log the branch index to see if it's found
+
+    // console.log("Branch Index:", branchIndex);
+
 
     if (branchIndex === -1) {
       return res.status(404).json({ message: 'Branch not found' });
@@ -114,7 +131,9 @@ const updateBranchInZone = async (req, res) => {
 
     res.status(200).json({ message: `Branch ${oldBranchName} updated successfully`, zone });
   } catch (error) {
-    console.error('Error updating branch:', error);
+    // console.error('Error updating branch:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -145,7 +164,9 @@ const deleteBranchFromZone = async (req, res) => {
 
     res.status(200).json({ message: `Branch ${branchName} removed successfully`, zone });
   } catch (error) {
-    console.error('Error deleting branch:', error);
+    // console.error('Error deleting branch:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };

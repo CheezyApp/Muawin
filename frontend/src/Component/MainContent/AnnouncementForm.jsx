@@ -41,16 +41,20 @@ const AnnouncementForm = ({ onClose, user, onAnnouncementAdded }) => {
         throw new Error('Failed to add announcement');
       })
       .then((data) => {
-        console.log('Announcement added:', data);
-        if (onAnnouncementAdded) {
-          onAnnouncementAdded(data);
-        }
-        onClose();
-      })
+      // console.log('Announcement added:', data);
+
+
+      if (onAnnouncementAdded) {
+        onAnnouncementAdded(data);
+      }
+      onClose();
+    })
       .catch((error) => {
-        console.error('Error saving announcement:', error);
-        alert('There was an error saving the announcement.');
-      });
+      // console.error('Error saving announcement:', error);
+
+
+      alert('There was an error saving the announcement.');
+    });
   };
 
   return (

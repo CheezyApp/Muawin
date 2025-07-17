@@ -20,12 +20,16 @@ async function createRootUser() {
   try {
     // Connect to MongoDB
     await mongoose.connect(config.mongoUri);
-    console.log('Connected to MongoDB');
+
+    // console.log('Connected to MongoDB');
+
 
     // Check if root user already exists
     const existingRoot = await User.findOne({ username: 'root' });
     if (existingRoot) {
-      console.log('Root user already exists');
+      // console.log('Root user already exists');
+
+
       process.exit(0);
     }
 
@@ -41,13 +45,21 @@ async function createRootUser() {
     });
 
     await newRootUser.save();
-    console.log('Root user created successfully');
-    console.log('Username:', rootUser.username);
-    console.log('Password:', rootUser.password);
-    console.log('Email:', rootUser.email);
+
+    // console.log('Root user created successfully');
+
+
+    // console.log('Username:', rootUser.username);
+
+
+    // console.log('Password:', rootUser.password);
+
+
+    // console.log('Email:', rootUser.email);
 
   } catch (error) {
-    console.error('Error creating root user:', error);
+    // console.error('Error creating root user:', error);
+
   } finally {
     await mongoose.disconnect();
     process.exit(0);

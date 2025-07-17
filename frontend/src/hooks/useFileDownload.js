@@ -7,7 +7,9 @@ export const useFileDownload = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('No authentication token found');
+        // console.error('No authentication token found');
+
+
         alert('Please log in to download files.');
         return;
       }
@@ -48,7 +50,9 @@ export const useFileDownload = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error('Error downloading file:', error);
+      // console.error('Error downloading file:', error);
+
+
       alert('Failed to download file. Please try again.');
     }
   };

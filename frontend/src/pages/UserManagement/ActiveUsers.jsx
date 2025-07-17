@@ -285,7 +285,9 @@ const ActiveUsers = () => {
   };
 
   const handleBranchUpdated = () => {
-    console.log("Branch has been updated");
+    // console.log("Branch has been updated");
+
+
     fetchUsers(); // Refresh user data or branches as needed
     setEditBranchNameOpen(false);
   };
@@ -483,7 +485,7 @@ const ActiveUsers = () => {
             </Stack>
           ) : (
             /* Desktop Toolbar */
-            <Toolbar
+            (<Toolbar
               disableGutters
               sx={{
                 display: 'flex',
@@ -536,7 +538,6 @@ const ActiveUsers = () => {
               >
                 Add a branch
               </Button>
-
               <Button
                 variant="text"
                 startIcon={<EditLocationAltIcon />}
@@ -545,7 +546,6 @@ const ActiveUsers = () => {
               >
                 Edit branch
               </Button>
-
               <Button
                 variant="text"
                 startIcon={<FileUploadIcon />}
@@ -554,7 +554,6 @@ const ActiveUsers = () => {
               >
                 Upload accounts
               </Button>
-
               <TextField
                 variant="outlined"
                 size="small"
@@ -572,7 +571,7 @@ const ActiveUsers = () => {
               />
               {/* Hover Button with Popover */}
               <HoverPopoverButton />
-            </Toolbar>
+            </Toolbar>)
           )}
 
           {/* Mobile User Cards */}
@@ -584,7 +583,7 @@ const ActiveUsers = () => {
             </Box>
           ) : (
             /* Desktop Table */
-            <TableContainer component={Paper} sx={{ mt: 2, maxWidth: '100%' }}>
+            (<TableContainer component={Paper} sx={{ mt: 2, maxWidth: '100%' }}>
               <Table>
                 <TableHead>
                   <TableRow>
@@ -638,7 +637,7 @@ const ActiveUsers = () => {
                   ))}
                 </TableBody>
               </Table>
-            </TableContainer>
+            </TableContainer>)
           )}
 
           <Menu

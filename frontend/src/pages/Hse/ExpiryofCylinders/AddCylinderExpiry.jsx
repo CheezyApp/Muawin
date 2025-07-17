@@ -46,7 +46,9 @@ const AddCylinderExpiry = ({ onAdd, user }) => {
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('Authentication token not found');
+          // console.error('Authentication token not found');
+
+
           return;
         }
         const [locationsRes, categoriesRes] = await Promise.all([
@@ -64,7 +66,8 @@ const AddCylinderExpiry = ({ onAdd, user }) => {
         setAvailableLocations(locationsRes.data);
         setAvailableCategories(categoriesRes.data);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        // console.error('Error fetching data:', error);
+
       }
     };
 
@@ -146,7 +149,9 @@ const AddCylinderExpiry = ({ onAdd, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found');
+        // console.error('Authentication token not found');
+
+
         return;
       }
       const responses = await Promise.all(
@@ -170,7 +175,9 @@ const AddCylinderExpiry = ({ onAdd, user }) => {
       setSnackbarMessage('Cylinder expiry data added successfully!');
       setSnackbarSeverity('success');
     } catch (error) {
-      console.error('Error submitting data:', error);
+      // console.error('Error submitting data:', error);
+
+
       setSnackbarOpen(true);
       setSnackbarMessage('Error submitting data. Please try again.');
       setSnackbarSeverity('error');
@@ -181,7 +188,9 @@ const AddCylinderExpiry = ({ onAdd, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found');
+        // console.error('Authentication token not found');
+
+
         return;
       }
       const responses = await Promise.all(
@@ -203,7 +212,8 @@ const AddCylinderExpiry = ({ onAdd, user }) => {
       );
       // Handle the response if needed
     } catch (error) {
-      console.error('Error submitting data:', error);
+      // console.error('Error submitting data:', error);
+
     }
   };
 

@@ -80,6 +80,10 @@ import Peshawar from './pages/Vehicles/Peshawar/Peshawar';
 import Rawalpindi from './pages/Vehicles/Rawalpindi/Rawalpindi';
 import Wah from './pages/Vehicles/Wah/Wah';
 
+// HR Portal Imports
+import HrPortal from './pages/HrPortal/HrPortal';
+import HiringApplications from './pages/HrPortal/Hiring Applications/HiringApplications';
+
 // User Management Imports
 import ActiveUsers from './pages/UserManagement/ActiveUsers';
 
@@ -734,6 +738,28 @@ const AuthenticatedApp = () => {
           element={
             isAuthenticated && user ? (
               <GuardTraining user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
+        {/* ------------ HR Portal Routes ------------ */}
+        <Route
+          path="/HRPortal/"
+          element={
+            isAuthenticated && user ? (
+              <HrPortal user={user} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+        <Route
+          path="/HRPortal/HiringApplications"
+          element={
+            isAuthenticated && user ? (
+              <HiringApplications />
             ) : (
               <Navigate to="/login" />
             )

@@ -89,7 +89,10 @@ const PunjabFoodAuthority = ({ open, user }) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setZones(await response.json());
-    } catch (error) { console.error('Error fetching zones:', error); }
+    } catch (error) {
+      // console.error('Error fetching zones:', error);
+
+    }
   }, []);
 
   const fetchBranches = useCallback(async (zoneName) => {
@@ -100,7 +103,10 @@ const PunjabFoodAuthority = ({ open, user }) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       setBranches(await response.json());
-    } catch (error) { console.error('Error fetching branches:', error); }
+    } catch (error) {
+      // console.error('Error fetching branches:', error);
+
+    }
   }, []);
 
   const fetchFiles = useCallback(async (forceRefresh = false) => {

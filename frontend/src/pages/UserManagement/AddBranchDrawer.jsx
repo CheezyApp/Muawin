@@ -38,9 +38,14 @@ const AddBranchDrawer = ({ open, onClose }) => {
     const fetchZones = async () => {
       try {
         const token = localStorage.getItem('token'); // Get token from localStorage
-        console.log('Fetching zones in AddBranchDrawer. Token:', token); // Log the token here
+
+        // console.log('Fetching zones in AddBranchDrawer. Token:', token);
+
+
         if (!token) {
-          console.error('Authentication token not found for fetching zones in AddBranchDrawer.');
+          // console.error('Authentication token not found for fetching zones in AddBranchDrawer.');
+
+
           return;
         }
         const response = await axios.get(`${process.env.REACT_APP_API_BASE_URL}/zones`, {
@@ -50,7 +55,8 @@ const AddBranchDrawer = ({ open, onClose }) => {
         });
         setZones(response.data);
       } catch (error) {
-        console.error('Error fetching zones:', error);
+        // console.error('Error fetching zones:', error);
+
       }
     };
 
@@ -80,7 +86,9 @@ const AddBranchDrawer = ({ open, onClose }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found');
+        // console.error('Authentication token not found');
+
+
         return;
       }
 
@@ -99,7 +107,8 @@ const AddBranchDrawer = ({ open, onClose }) => {
       setConfirmationDialogOpen(false);
       onClose(); // Close drawer after adding the branch
     } catch (error) {
-      console.error('Error adding branch:', error);
+      // console.error('Error adding branch:', error);
+
     }
   };
 

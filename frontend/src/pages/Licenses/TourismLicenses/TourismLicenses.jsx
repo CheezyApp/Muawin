@@ -73,7 +73,9 @@ const TourismLicenses = ({ open, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for fetching zones.');
+        // console.error('Authentication token not found for fetching zones.');
+
+
         return;
       }
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/zones`, {
@@ -82,7 +84,8 @@ const TourismLicenses = ({ open, user }) => {
       const zonesData = await response.json();
       setZones(zonesData);
     } catch (error) {
-      console.error('Error fetching zones:', error);
+      // console.error('Error fetching zones:', error);
+
     }
   };
 
@@ -91,7 +94,9 @@ const TourismLicenses = ({ open, user }) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        console.error('Authentication token not found for fetching branches.');
+        // console.error('Authentication token not found for fetching branches.');
+
+
         return;
       }
       const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/zones/${zoneName}/branches`, {
@@ -100,7 +105,8 @@ const TourismLicenses = ({ open, user }) => {
       const branchesData = await response.json();
       setBranches(branchesData);
     } catch (error) {
-      console.error('Error fetching branches:', error);
+      // console.error('Error fetching branches:', error);
+
     }
   };
 
@@ -144,7 +150,9 @@ const TourismLicenses = ({ open, user }) => {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('Error fetching files:', error);
+      // console.error('Error fetching files:', error);
+
+
       setSnackbarMessage('Failed to fetch files. Please try again.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -187,7 +195,9 @@ const TourismLicenses = ({ open, user }) => {
             uploadCompressedFile(result, normalizedFileName, token);
           },
           error(err) {
-            console.error('Compression failed:', err);
+            // console.error('Compression failed:', err);
+
+
             uploadCompressedFile(file, normalizedFileName, token);
           },
         });
@@ -195,7 +205,9 @@ const TourismLicenses = ({ open, user }) => {
         await uploadCompressedFile(file, normalizedFileName, token);
       }
     } catch (error) {
-      console.error('Error uploading file:', error);
+      // console.error('Error uploading file:', error);
+
+
       setSnackbarMessage('Failed to upload file.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -246,7 +258,9 @@ const TourismLicenses = ({ open, user }) => {
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       xhr.send(formData);
     } catch (error) {
-      console.error('Error uploading file:', error);
+      // console.error('Error uploading file:', error);
+
+
       setSnackbarMessage('Failed to upload file.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -317,7 +331,9 @@ const TourismLicenses = ({ open, user }) => {
         fetchFiles(true);
       }, AUTO_REFRESH_DELAY);
     } catch (error) {
-      console.error('Batch upload failed:', error);
+      // console.error('Batch upload failed:', error);
+
+
       setSnackbarMessage('Some files failed to upload.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
@@ -371,7 +387,9 @@ const TourismLicenses = ({ open, user }) => {
         throw new Error(`Delete failed: ${response.statusText}`);
       }
     } catch (error) {
-      console.error('Error deleting file:', error);
+      // console.error('Error deleting file:', error);
+
+
       // Revert optimistic update
       setFiles(originalFiles);
       setSnackbarMessage('Failed to delete file. Please try again.');

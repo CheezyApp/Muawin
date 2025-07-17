@@ -41,7 +41,9 @@ const createUser = async (req, res) => {
 
     res.status(201).json({ message: 'User created successfully', user: newUser });
   } catch (error) {
-    console.error('Error creating user:', error.stack);
+    // console.error('Error creating user:', error.stack);
+
+
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
 };
@@ -64,15 +66,20 @@ const signInUser = async (req, res) => {
     });
 
     if (!user) {
-      console.log('Sign-in failed: User not found for username/email:', username || email);
+      // console.log('Sign-in failed: User not found for username/email:', username || email);
+
+
       return res.status(404).json({ message: 'User not found' });
     }
 
-    console.log('Sign-in attempt: User found:', user.username);
+    // console.log('Sign-in attempt: User found:', user.username);
+
 
     // Ensure both data and hash are present for bcrypt.compare()
     if (!user.password) {
-      console.error('Password not found for user:', username || email);
+      // console.error('Password not found for user:', username || email);
+
+
       return res.status(500).json({ message: 'Server error: Missing password data' });
     }
 
@@ -80,11 +87,14 @@ const signInUser = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      console.log('Sign-in failed: Invalid credentials for user:', user.username);
+      // console.log('Sign-in failed: Invalid credentials for user:', user.username);
+
+
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    console.log('Sign-in successful: Password is valid for user:', user.username);
+    // console.log('Sign-in successful: Password is valid for user:', user.username);
+
 
     // Generate JWT token
     const token = jwt.sign(
@@ -93,7 +103,8 @@ const signInUser = async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    console.log('Sign-in successful: Token generated.');
+    // console.log('Sign-in successful: Token generated.');
+
 
     // Construct response data, overriding for root user
     const isRootUser = user.role === 'root';
@@ -126,7 +137,7 @@ const signInUser = async (req, res) => {
         "Taxation_Marketing / Bill Boards Taxes",
         "Certificates_Electric Fitness Test",
         "Security_Guard Training",
-        "User Requests",
+        "HR Poral",
         "Rental Agreements",
         "Admin Policies and SOPs",
         "User Management_"
@@ -138,11 +149,14 @@ const signInUser = async (req, res) => {
       user: responseUser,
     };
 
-    console.log('Sign-in successful: Sending response data:', responseData);
-    res.status(200).json(responseData);
+    // console.log('Sign-in successful: Sending response data:', responseData);
 
+
+    res.status(200).json(responseData);
   } catch (error) {
-    console.error('Error during sign-in:', error.message, error.stack);
+    // console.error('Error during sign-in:', error.message, error.stack);
+
+
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
@@ -153,7 +167,9 @@ const getAllUsers = async (req, res) => {
     const users = await User.find(); // Fetch all users
     res.status(200).json(users); // Include plainPassword in the response
   } catch (error) {
-    console.error('Error fetching users:', error);
+    // console.error('Error fetching users:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -173,21 +189,26 @@ const updateUser = async (req, res) => {
     }
     res.status(200).json(updatedUser);
   } catch (error) {
-    console.error('Error updating user:', error);
+    // console.error('Error updating user:', error);
+
+
     res.status(500).json({ message: 'Server error' });
   }
 };
 
 // Update user's modules
 const updateUserModules = async (req, res) => {
-  console.log(`Request received to update modules for user: ${req.params.id}`);
-  
+  // console.log(`Request received to update modules for user: ${req.params.id}`);
+
+
   try {
     const { modules } = req.body;
     const userId = req.params.id;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      console.log('Invalid User ID:', userId);
+      // console.log('Invalid User ID:', userId);
+
+
       return res.status(400).send({ message: 'Invalid User ID' });
     }
 
@@ -198,13 +219,17 @@ const updateUserModules = async (req, res) => {
     );
 
     if (!updatedUser) {
-      console.log('User not found:', userId);
+      // console.log('User not found:', userId);
+
+
       return res.status(404).send({ message: 'User not found' });
     }
 
     res.status(200).send({ message: 'Modules updated successfully', updatedUser });
   } catch (error) {
-    console.error('Error updating modules:', error);
+    // console.error('Error updating modules:', error);
+
+
     res.status(500).send({ message: 'Internal server error' });
   }
 };
@@ -214,12 +239,14 @@ const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Log the ID received
-    console.log(`Received request to delete user with ID: ${id}`);
+    // console.log(`Received request to delete user with ID: ${id}`);
+
 
     // Ensure the ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      console.log('Invalid user ID');
+      // console.log('Invalid user ID');
+
+
       return res.status(400).json({ message: 'Invalid user ID', status: 'error' });
     }
 
@@ -227,14 +254,20 @@ const deleteUser = async (req, res) => {
     const deletedUser = await User.findByIdAndDelete(id);
 
     if (!deletedUser) {
-      console.log('User not found');
+      // console.log('User not found');
+
+
       return res.status(404).json({ message: 'User not found', status: 'error' });
     }
 
-    console.log('User deleted successfully');
+    // console.log('User deleted successfully');
+
+
     return res.status(200).json({ message: 'User deleted successfully', status: 'success' });
   } catch (error) {
-    console.error('Error deleting user:', error);
+    // console.error('Error deleting user:', error);
+
+
     return res.status(500).json({ message: 'Internal server error', status: 'error' });
   }
 };
@@ -332,7 +365,9 @@ const uploadUsersFromExcel = async (req, res) => {
     }
     res.json({ created, failed, errors, createdUsers });
   } catch (error) {
-    console.error('Bulk upload error:', error);
+    // console.error('Bulk upload error:', error);
+
+
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };

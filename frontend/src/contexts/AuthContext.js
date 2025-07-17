@@ -44,7 +44,9 @@ export const AuthProvider = ({ children }) => {
               localStorage.removeItem('user');
             }
           } catch (error) {
-            console.error('Error verifying token:', error);
+            // console.error('Error verifying token:', error);
+
+
             // On network error, clear auth state for security
             localStorage.removeItem('token');
             localStorage.removeItem('user');
@@ -58,7 +60,8 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch (error) {
-        console.error('Error initializing authentication:', error);
+        // console.error('Error initializing authentication:', error);
+
       } finally {
         setIsLoading(false);
       }
