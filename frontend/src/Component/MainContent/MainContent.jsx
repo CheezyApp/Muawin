@@ -89,7 +89,7 @@ const MainContent = ({ user }) => {
       { name: 'Security', image: '/images/security.webp' },
       { name: 'Admin Policies and SOPs', image: '/images/admin_icon.webp' },
       { name: 'Rental Agreements', image: '/images/rental_agreements.webp' },
-      { name: 'HR Portal', image: '/images/rental_agreements.webp' },
+      { name: 'HR Portal', image: '/images/hr_icon.webp' },
       { name: 'User Management', image: '/images/user_management.webp' },
     ];
     return allTiles.filter((tile) =>

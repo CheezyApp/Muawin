@@ -23,7 +23,7 @@ const utilityRoutes = require("./routes/utilityRoutes")
 const designationRoutes = require("./routes/designationRoutes")
 
 // Initialize express app
-const app = express();
+const app = express()
 
 
 // Connect to MongoDB
